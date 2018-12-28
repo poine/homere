@@ -46,7 +46,7 @@ class HomereHardwareInterface : public hardware_interface::RobotHW
   hardware_interface::PositionJointInterface pj_interface_;
   hardware_interface::ImuSensorInterface     imu_sensor_interface_;
 
-  rc_imu_data_t rc_imu_data_;
+  //rc_imu_data_t rc_imu_data_;
 
 };
 
