@@ -1,5 +1,5 @@
 
-import serial, struct
+import time, serial, struct
 
 
 cmd_drive_forward_m1  = 0x00
@@ -12,7 +12,7 @@ cmd_deadband          = 0x11
 
 class SaberTooth:
     def __init__(self):
-        self.device = '/dev/ttyS2'
+        self.device = '/dev/ttyS1'
         self.ser = serial.Serial(port=self.device, baudrate=9600)
         self.addr = 128
         self.set_serial_timeout(100)
@@ -23,7 +23,6 @@ class SaberTooth:
         self.send_cmd(cmd_serial_timeout, n)
 
     def set_deadband(self, deadband):
-        
         self.send_cmd(cmd_deadband, deadband)
         
         
@@ -42,3 +41,13 @@ class SaberTooth:
     def quit(self):
         self.send(0, 0)
         self.ser.close()
+
+
+
+
+
+if __name__ == '__main__':
+    mc = SaberTooth() 
+    while True:
+        mc.send(10, 10)
+        time.sleep(0.05)

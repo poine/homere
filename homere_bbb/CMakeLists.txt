@@ -7,11 +7,14 @@ add_compile_options(-std=c++11)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
+find_package( catkin REQUIRED COMPONENTS
+  roscpp
   controller_interface
   controller_manager
   message_generation
 )
+
+find_package( async_comm REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -105,8 +108,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES homere_bbb
-#  CATKIN_DEPENDS other_catkin_pkg
-  DEPENDS system_lib
+#  CATKIN_DEPENDS serial
+  DEPENDS async_comm
 )
 
 ###########
@@ -118,6 +121,7 @@ catkin_package(
 include_directories(
  include
  ${catkin_INCLUDE_DIRS}
+ ${async_comm_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -136,6 +140,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/homere_bbb_node.cpp)
 add_executable(homere_hardware_interface_node
   src/homere_hardware_interface.cpp
+  src/sabertooth.cpp
 )
 
 ## Rename C++ executable without prefix
@@ -154,7 +159,7 @@ add_executable(homere_hardware_interface_node
 # )
 
 target_link_libraries(homere_hardware_interface_node
-  ${catkin_LIBRARIES} roboticscape 
+  ${catkin_LIBRARIES} roboticscape ${async_comm_LIBRARIES}
 )
 
 
