@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<library path="lib/libhomere_controller">
+
+  <class name="homere_control/HomereController" type="homere_controller::HomereController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      The HomereController runs a diff drive wheelchair robot.
+    </description>
+  </class>
+
+</library>
