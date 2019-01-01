@@ -10,6 +10,7 @@
 
 #include <pluginlib/class_list_macros.h>
 
+#include "homere_control/input_manager.h"
 
 namespace homere_controller {
 
