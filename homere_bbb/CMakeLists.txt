@@ -143,6 +143,10 @@ add_executable(homere_hardware_interface_node
   src/sabertooth.cpp
 )
 
+add_executable(test_sabertooth
+  src/test_sabertooth.cpp
+  src/sabertooth.cpp
+)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -162,7 +166,9 @@ target_link_libraries(homere_hardware_interface_node
   ${catkin_LIBRARIES} roboticscape ${async_comm_LIBRARIES}
 )
 
-
+target_link_libraries(test_sabertooth
+  ${catkin_LIBRARIES} ${async_comm_LIBRARIES}
+)
 
 #############
 ## Install ##

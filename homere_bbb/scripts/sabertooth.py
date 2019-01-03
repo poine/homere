@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+
+'''
+  This is a driver for the sabertooth motor controller
+  in "Packetized Serial Mode"
+  see https://www.dimensionengineering.com/datasheets/Sabertooth2x60.pdf
+'''
 
 import time, serial, struct
 
@@ -12,11 +19,11 @@ cmd_deadband          = 0x11
 
 class SaberTooth:
     def __init__(self):
-        self.device = '/dev/ttyS1'
+        self.device = '/dev/ttyS5'
         self.ser = serial.Serial(port=self.device, baudrate=9600)
         self.addr = 128
         self.set_serial_timeout(100)
-        self.set_deadband(1)
+        #self.set_deadband(1)
         
     def set_serial_timeout(self, milisec):
         n = int(milisec/100)
@@ -26,7 +33,7 @@ class SaberTooth:
         self.send_cmd(cmd_deadband, deadband)
         
         
-    def send(self, m1, m2):
+    def send_drive(self, m1, m2):
         ''' m1, m2: range -127:127 '''
         cmd, data = (cmd_drive_forward_m1, m1) if m1 >=0 else (cmd_drive_backward_m1, -m1)
         self.send_cmd(cmd, data)
@@ -35,19 +42,18 @@ class SaberTooth:
 
     def send_cmd(self, cmd, data):
         checksum = self.addr+cmd+data & 0x7f
+        print('{:d} {:d} {:d} {:d}'.format(self.addr, cmd, data, checksum))
         s = struct.pack('cccc', chr(self.addr), chr(cmd), chr(data), chr(checksum))
         self.ser.write(s)
         
     def quit(self):
-        self.send(0, 0)
+        self.send_drive(0, 0)
         self.ser.close()
-
-
 
 
 
 if __name__ == '__main__':
     mc = SaberTooth() 
     while True:
-        mc.send(10, 10)
+        mc.send_drive(10, 10)
         time.sleep(0.05)

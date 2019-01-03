@@ -8,8 +8,12 @@ class SaberTooth {
   SaberTooth();
   ~SaberTooth();
   bool init();
+  void send_drive(int m1, int m2);
+  void send(uint8_t cmd, uint8_t data);
  private:
   async_comm::Serial serial_;
+  int addr_;
+  
 };
 
 #endif // HOMERE_BBB__SABERTOOTH_H

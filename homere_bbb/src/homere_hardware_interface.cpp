@@ -4,7 +4,7 @@
 #include <thread>
 
 #define __NAME "homere_hardware_interface"
-const std::string joint_name_[NB_JOINTS] = {"left_wheel_joint","right_wheel_joint", "steering_joint"};
+const std::string joint_name_[NB_JOINTS] = {"left_wheel_joint","right_wheel_joint"};
 
 // Mechanics
 #define GEARBOX                       100.37
@@ -21,8 +21,8 @@ const std::string joint_name_[NB_JOINTS] = {"left_wheel_joint","right_wheel_join
 //#define MOTOR_POLARITY_R               -1
 #define ENCODER_CHANNEL_L               1
 #define ENCODER_CHANNEL_R               2
-#define ENCODER_POLARITY_L             -1
-#define ENCODER_POLARITY_R              1
+#define ENCODER_POLARITY_L              -1
+#define ENCODER_POLARITY_R              -1
 // IMU
 #define IMU_SAMPLE_RATE_HZ 100
 #define IMU_DT (1./IMU_SAMPLE_RATE_HZ)
@@ -47,14 +47,14 @@ HomereHardwareInterface::HomereHardwareInterface()
     joint_position_command_[i] = 0.;
     js_interface_.registerHandle(hardware_interface::JointStateHandle(
         joint_name_[i], &joint_position_[i], &joint_velocity_[i], &joint_effort_[i]));
-    if (i<2) {
+    //if (i<2) {
       ej_interface_.registerHandle(hardware_interface::JointHandle(
 	js_interface_.getHandle(joint_name_[i]), &joint_effort_command_[i]));
-    }
-    else {
-      pj_interface_.registerHandle(hardware_interface::JointHandle(
-        js_interface_.getHandle(joint_name_[i]), &joint_position_command_[i]));
-    }
+      //}
+    // else {
+    //   pj_interface_.registerHandle(hardware_interface::JointHandle(
+    //     js_interface_.getHandle(joint_name_[i]), &joint_position_command_[i]));
+    // }
   }
   registerInterface(&js_interface_);
   registerInterface(&ej_interface_);
@@ -143,7 +143,7 @@ void HomereHardwareInterface::read() {
   joint_position_[0] = left_wheel_angle;
   joint_position_[1] = right_wheel_angle;
   
-  joint_position_[2] = joint_position_command_[2];
+  //joint_position_[2] = joint_position_command_[2];
 }
 /*******************************************************************************
  *
@@ -155,7 +155,7 @@ void HomereHardwareInterface::write() {
   float dutyR =  joint_effort_command_[1];
   //float steering = joint_position_command_[2];
   //ROS_INFO(" write HW %f %f %f", dutyL, dutyR, steering);
-  
+  sabert_.send_drive(dutyL, dutyR);
   //rc_set_motor(MOTOR_CHANNEL_L, MOTOR_POLARITY_L * dutyL);
   //rc_set_motor(MOTOR_CHANNEL_R, MOTOR_POLARITY_R * dutyR);
   //rc_send_servo_pulse_normalized( STEERING_SERVO_CH, STEERING_SERVO_NEUTRAL+steering*STEERING_SERVO_POLARITY );

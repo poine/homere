@@ -2,3 +2,8 @@
 homere_joint_publisher:
   type: joint_state_controller/JointStateController
   publish_rate: 50
+
+homere_controller:
+    type: homere_control/HomereController
+    pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]

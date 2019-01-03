@@ -4,10 +4,16 @@ project(homere_control)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 
+
+# https://stackoverflow.com/questions/48149323/what-does-the-the-gcc-warning-project-parameter-passing-for-x-changed-in-gcc-7
+add_compile_options(-Wno-psabi)
+
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  roscpp rospy std_msgs
   controller_interface
   message_generation)
 
@@ -45,11 +51,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  homere_controller_input.msg
+  homere_controller_debug.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -66,10 +72,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -103,8 +109,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES homere_control
-#  CATKIN_DEPENDS other_catkin_pkg
-  DEPENDS message_runtime
+  CATKIN_DEPENDS message_runtime
+#  DEPENDS message_runtime
 )
 
 ###########
@@ -125,8 +131,12 @@ include_directories(
 
 add_library(homere_controller
   src/homere_controller.cpp
+  src/input_manager.cpp
+  src/odometry.cpp
+  src/publisher.cpp
 )
-  
+
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -184,11 +194,9 @@ target_link_libraries(homere_controller
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##

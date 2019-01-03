@@ -18,7 +18,7 @@
 
 #include "homere_bbb/sabertooth.h"
 
-#define NB_JOINTS 3
+#define NB_JOINTS 2
 
 class HomereHardwareInterface : public hardware_interface::RobotHW
 {
