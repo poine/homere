@@ -15,6 +15,7 @@
 #include "homere_control/input_manager.h"
 #include "homere_control/odometry.h"
 #include "homere_control/publisher.h"
+#include "homere_control/utils.h"
 
 namespace homere_controller {
 
@@ -40,6 +41,9 @@ namespace homere_controller {
       homere_controller::Odometry       odometry_;
       homere_controller::Publisher      publisher_;
       homere_controller::DebugPublisher debug_publisher_;
+
+      homere_controller::LeftFeedForward    lw_feedforward_;
+      homere_controller::RightFeedForward   rw_feedforward_;
       
       // filter structures
       rc_filter_t rvel_lp_l_, rvel_lp_r_;

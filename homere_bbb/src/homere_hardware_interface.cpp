@@ -93,7 +93,7 @@ static void __mpu_cbk(void)
  *
  *
  *******************************************************************************/
-bool HomereHardwareInterface::start() {
+bool HomereHardwareInterface::start(const ros::Time& time) {
 
   if(rc_encoder_eqep_init()){
     ROS_ERROR("in HomereHardwareInterface::start: failed to initialize robotics cape");
@@ -126,6 +126,9 @@ bool HomereHardwareInterface::start() {
   
   rc_set_state(RUNNING);
   sabert_.init();
+  last_enc_read_ = time;
+  joint_position_[0] = rc_encoder_eqep_read(ENCODER_CHANNEL_L) * 2 * M_PI / (ENCODER_POLARITY_L * GEARBOX * ENCODER_RES);
+  joint_position_[1] = rc_encoder_eqep_read(ENCODER_CHANNEL_R) * 2 * M_PI / (ENCODER_POLARITY_R * GEARBOX * ENCODER_RES);
   return true;
 }
 
@@ -133,17 +136,21 @@ bool HomereHardwareInterface::start() {
  *
  *
  *******************************************************************************/
-void HomereHardwareInterface::read() {
-  //printf(" __read\n");
+#define MIN_DELAY_FOR_VEL 1e-6
+void HomereHardwareInterface::read(const ros::Time& now) {
+
   double left_wheel_angle = rc_encoder_eqep_read(ENCODER_CHANNEL_L) * 2 * M_PI / (ENCODER_POLARITY_L * GEARBOX * ENCODER_RES);
   double right_wheel_angle = rc_encoder_eqep_read(ENCODER_CHANNEL_R) * 2 * M_PI / (ENCODER_POLARITY_R * GEARBOX * ENCODER_RES);
-  //printf(" __read %f\n",  right_wheel_angle);
-  joint_velocity_[0] = (left_wheel_angle - joint_position_[0]) / IMU_DT;
-  joint_velocity_[1] = (right_wheel_angle - joint_position_[1]) / IMU_DT;
+
+  const double dt = (now - last_enc_read_).toSec();
+  if (dt> MIN_DELAY_FOR_VEL) {
+    joint_velocity_[0] = (left_wheel_angle - joint_position_[0]) / dt;
+    joint_velocity_[1] = (right_wheel_angle - joint_position_[1]) / dt;
+  }
+  last_enc_read_ = now;
   joint_position_[0] = left_wheel_angle;
   joint_position_[1] = right_wheel_angle;
   
-  //joint_position_[2] = joint_position_command_[2];
 }
 /*******************************************************************************
  *
@@ -207,7 +214,7 @@ int main(int argc, char** argv)
   spinner.start();
 
   HomereHardwareInterface hw;
-  if (!hw.start()) {
+  if (!hw.start(ros::Time::now())) {
     ROS_ERROR_STREAM_NAMED(__NAME, "Failed to initialize hardware. bailling out...");
     return -1;
   }
@@ -222,8 +229,9 @@ int main(int argc, char** argv)
       //pthread_cond_wait( &rc_imu_read_condition, &rc_imu_read_mutex );
       //pthread_mutex_unlock( &rc_imu_read_mutex );
       
-      hw.read();
-      cm.update(ros::Time::now(), period);
+      ros::Time now = ros::Time::now();
+      hw.read(now);
+      cm.update(now, period);
       hw.write();
     }
 

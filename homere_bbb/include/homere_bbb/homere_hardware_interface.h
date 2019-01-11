@@ -26,8 +26,8 @@ class HomereHardwareInterface : public hardware_interface::RobotHW
   HomereHardwareInterface();
   virtual ~HomereHardwareInterface();
 
-  bool start();
-  void read();
+  bool start(const ros::Time& time);
+  void read(const ros::Time& time);
   void write();
   bool shutdown();
   //void switch_motors_on()  { rc_enable_motors(); }
@@ -42,7 +42,8 @@ class HomereHardwareInterface : public hardware_interface::RobotHW
   double joint_effort_[NB_JOINTS];
   double joint_effort_command_[NB_JOINTS];
   double joint_position_command_[NB_JOINTS];
- 
+  ros::Time last_enc_read_;
+  
   // IMU
   hardware_interface::ImuSensorHandle::Data imu_data_;
   double imu_orientation_[4];         // quat is in the order of geometry_msg, ie x, y, z, w
