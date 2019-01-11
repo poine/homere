@@ -164,7 +164,7 @@ add_library(homere_controller
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(homere_controller
-  ${catkin_LIBRARIES}
+  ${catkin_LIBRARIES} roboticscape
 )
 
 #############

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="world_name" default="worlds/empty.world"/>
+  <arg name="robot_initial_loc" default="-x 0 -y 0 -z 0.3"/>
+  <arg name="robot_initial_ori" default="-R 0 -P 0 -Y 0"/>
+  
+  
+  <!-- gazebo_control launch file -->
+  <rosparam command="load" file="$(find homere_simulator)/config/control.yaml" />
+  <arg name="new_ctl" default="true"/>
+  <group if="$(arg new_ctl)">
+    <node name="base_controller_spawner" pkg="controller_manager" type="spawner"
+	  output="screen" respawn="false" ns="/homere" args="--namespace=/homere homere_joint_publisher homere_controller"/>
+  </group>
+  
+  <!-- start gazebo simulation -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/> <!-- world_name is wrt GAZEBO_RESOURCE_PATH environment variable -->
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- Load the URDF into the ROS Parameter Server -->
+  <param name="robot_description"
+	 command="$(find xacro)/xacro --inorder '$(find homere_simulator)/urdf/homere.urdf.xacro'" />
+  
+  <!--  spawn the robot in gazebo -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -model homere -param robot_description $(arg robot_initial_loc) $(arg robot_initial_ori)"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    <remap from="/joint_states" to="/homere/joint_states" />
+  </node>
+
+  
+<!--  <group if="$(eval robot_model == 'julie_1')"> -->
+    <!-- start robot_control node -->
+<!--    <include file="$(find julie_gazebo_ackermann_controller)/launch/julie_gazebo_ackermann_controller.launch"/> -->
+    <!-- initialize odometry -->
+    <!-- <node pkg="rosservice" type="rosservice" name="initialize_odometry" args="call \-\-wait /julie_gazebo_ackermann_controller/set_odometry 14 4 1 0"/> -->
+    
+    <!-- start joystick -->
+    <!-- <include file="$(find rbcar_joystick)/launch/rbcar_joystick.launch"/> -->
+<!--  </group> -->
+
+</launch>

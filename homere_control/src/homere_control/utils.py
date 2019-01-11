@@ -9,10 +9,6 @@ import matplotlib.pyplot as plt
 import pdb
 
 
-def symsawtooth(t, n_stair=20, dt_stair=0.5, _min=-20, _max=20, t0=0):
-    a = int(math.fmod(t-t0, dt_stair*(n_stair+1))/dt_stair)
-    return _min + (_max - _min) * a / n_stair
-
 class SymSawtooth:
     def __init__(self, n_stair=20, dt_stair=0.5, _min=-20, _max=20, t0=0):
         self.vals = np.concatenate((np.linspace(_min, _max, n_stair/2), np.linspace(_max, _min, n_stair/2)))

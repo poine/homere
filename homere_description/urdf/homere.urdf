@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf8"?>
+
+
+<robot name="homere" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- dimensions -->
+  <xacro:property name="chassis_a"        value="0.7" />
+  <xacro:property name="chassis_b"        value="0.5" />
+  <xacro:property name="chassis_c"        value="0.1" />
+  <xacro:property name="chassis_m"        value="5."  />
+  <xacro:property name="chassis_h_offset" value="0.15"/>
+  <xacro:property name="chassis_v_offset" value="0.1" />
+  
+  <xacro:property name="wheel_a"          value="0.2" />
+  <xacro:property name="wheel_b"          value="0.1" />
+  <xacro:property name="wheel_c"          value="0.5" />
+  <xacro:property name="wheel_d"          value="0.1" />
+  <xacro:property name="wheel_e"          value="0."  />
+  <xacro:property name="wheel_f"          value="0.05"/>
+  <xacro:property name="wheel_m"          value="1."  />
+
+  <xacro:property name="caster_ax1_l"     value="0.1"  /> <!-- size and location !-->
+  <xacro:property name="caster_ax1_r"     value="0.025"/> <!-- of vertical axle  !-->
+  <xacro:property name="caster_ax1_dx"    value="0.5"  /> <!-- wrt base_link     !-->
+  <xacro:property name="caster_ax1_dy"    value="0.25" />
+  <xacro:property name="caster_ax1_dz"    value="0.075" />
+  <xacro:property name="caster_ax2_l"     value="0.1"  /> <!-- size and location  !-->
+  <xacro:property name="caster_ax2_r"     value="0.025"/> <!-- of horizontal axle !-->
+  <xacro:property name="caster_ax2_loc"   value="-0.05 0 -0.15"/> <!-- wrt vert axle      !-->
+  <xacro:property name="caster_wheel_r"   value="0.12" /> <!-- Wheel diameter and hub diameter-->
+  <xacro:property name="caster_wheel_r1"  value="0.05" /> 
+  <xacro:property name="caster_wheel_l"   value="0.08" /> <!-- wheel thickness --> 
+  <xacro:property name="caster_wheel_m"   value="0.5"  /> <!-- wheel mass      -->
+  
+ <!-- Degree-to-radian conversions -->
+  <xacro:property name="degrees_45"  value="${pi/4.}"/>
+  <xacro:property name="degrees_90"  value="${pi/2.}"/>
+  <xacro:property name="degrees_180" value="${pi}"/>
+
+  <!-- Import Macros -->
+  <xacro:include filename="$(find homere_description)/urdf/inertias.urdf.xacro" />
+
+  <material name="transp_green">
+    <color rgba="0 0.8 0 0.5"/>
+  </material>
+
+  <material name="transp_yellow">
+    <color rgba="0.8 0.8 0 0.5"/>
+  </material>
+
+  <material name="tire_material">
+    <color rgba="0 0 0.8 0.5"/>
+  </material>
+
+  
+  <!-- Chassis -->
+  <xacro:macro name="homere_chassis">
+    <link name="chassis_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${chassis_a} ${chassis_b} ${chassis_c}"/>
+        </geometry>
+	<material name="transp_yellow"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0"/>
+        <geometry>
+          <box size="${chassis_a} ${chassis_b} ${chassis_c}"/>
+        </geometry>
+      </collision>
+      <xacro:inertial_cuboid_with_pose mass="${chassis_m}" x_length="${chassis_a}" y_length="${chassis_b}" z_length="${chassis_c}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:inertial_cuboid_with_pose>
+    </link>
+    <joint name="chassis_joint" type="fixed">
+      <origin xyz="${chassis_h_offset} 0 ${chassis_v_offset}" rpy="0 0 0" />
+      <parent link="base_link"/>
+      <child link="chassis_link" />
+    </joint>
+  </xacro:macro>
+
+  <!-- Wheels -->
+  <xacro:macro name="homere_rear_wheel" params="lr_prefix lr_reflect">
+    <!-- Axle -->
+    <link name="${lr_prefix}_rear_axle_carrier_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${degrees_90} 0 0"/>
+        <geometry><cylinder radius="0.02" length="${wheel_f}"/></geometry>
+        <material name="transp_green"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${degrees_90} 0 0"/>
+        <geometry><cylinder radius="0.02" length="${wheel_f}"/></geometry>
+      </collision>
+      <xacro:inertial_null/>
+    </link>
+
+    <joint name="${lr_prefix}_bl_to_axle_carrier_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${lr_prefix}_rear_axle_carrier_link"/>
+      <origin xyz="0 ${lr_reflect * ((wheel_c / 2))} 0"/>
+    </joint>
+  
+    <!-- Tire -->
+    <xacro:property name="_wheel_xyz_origin" value="0 0 ${lr_reflect * (wheel_f/2 + wheel_b / 2)}" scope="local"/>
+    <link name="${lr_prefix}_rear_wheel_link">
+      <visual>
+	<origin xyz="${_wheel_xyz_origin}"/>
+        <geometry><cylinder radius="${wheel_a}" length="${wheel_b}"/></geometry>
+        <material name="tire_material"/>
+      </visual>
+      <collision>
+        <origin xyz="${_wheel_xyz_origin}"/>
+        <geometry><cylinder radius="${wheel_a}" length="${wheel_b}"/></geometry>
+      </collision>
+      <xacro:inertial_hollow_tube_with_pose mass="${wheel_m}" inner_rad="${wheel_d}" outer_rad="${wheel_a}" height="${wheel_b}">
+        <origin xyz="${_wheel_xyz_origin}" rpy="0 0 0"/>
+      </xacro:inertial_hollow_tube_with_pose>
+    </link>
+
+    <joint name="${lr_prefix}_rear_axle_joint" type="continuous">
+      <parent link="${lr_prefix}_rear_axle_carrier_link"/>
+      <child link="${lr_prefix}_rear_wheel_link"/>
+      <origin rpy="${degrees_90} 0 ${degrees_180}"/>
+      <axis xyz="0 0 1"/>
+      <!--
+	  <limit effort="${wheel_axle_joint_eff_limit}" velocity="${wheel_axle_joint_vel_limit}"/>
+	  <dynamic damping="${wheel_axle_joint_damping}" friction="{wheel_axle_joint_friction}"/>
+      -->
+    </joint>
+
+    <transmission name="${lr_prefix}_rear_axle_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${lr_prefix}_rear_axle_joint">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${lr_prefix}_rear_axle_act">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    
+  </xacro:macro>
+
+  <!-- Casters -->
+  <xacro:macro name="homere_caster" params="lr_prefix lr_reflect">
+
+    <!-- Vertical axle -->
+    <link name="${lr_prefix}_caster_ax1_carrier_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${degrees_90}"/>
+        <geometry><cylinder radius="${caster_ax1_r}" length="${caster_ax1_l}"/></geometry>
+        <material name="transp_green"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 ${degrees_90}"/>
+        <geometry><cylinder radius="${caster_ax1_r}" length="${caster_ax1_l}"/></geometry>
+      </collision>
+      <xacro:inertial_null/>
+    </link>
+
+    <joint name="${lr_prefix}_bl_to_caster_axle_carrier_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${lr_prefix}_caster_ax1_carrier_link"/>
+      <origin xyz="${caster_ax1_dx} ${lr_reflect * caster_ax1_dy} ${caster_ax1_dz}"/>
+    </joint>
+
+    <!-- Horizontal axle -->
+    <link name="${lr_prefix}_caster_ax2_link">
+       <visual>
+	 <origin xyz="${caster_ax2_loc}" rpy="${degrees_90} 0 0"/>
+	 <geometry><cylinder radius="${caster_ax2_r}" length="${caster_ax2_l}"/></geometry>
+       </visual>
+       <xacro:inertial_null/>
+    </link>
+
+    <joint name="${lr_prefix}_caster_ax1_to_ax2_joint" type="continuous">
+      <parent link="${lr_prefix}_caster_ax1_carrier_link"/>
+      <child link="${lr_prefix}_caster_ax2_link"/>
+      <origin xyz="0 0 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+
+    <transmission name="${lr_prefix}_caster_ax1_to_ax2_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${lr_prefix}_caster_ax1_to_ax2_joint">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${lr_prefix}_caster_ax1_act">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+
+    
+    <!-- Wheel -->
+    <link name="${lr_prefix}_caster_wheel_link">
+      <visual>
+	<origin xyz="0 0 0"/>
+        <geometry><cylinder radius="${caster_wheel_r}" length="${caster_wheel_l}"/></geometry>
+        <material name="tire_material"/>
+      </visual>
+      <collision>
+	<origin xyz="0 0 0"/>
+        <geometry><cylinder radius="${caster_wheel_r}" length="${caster_wheel_l}"/></geometry>
+      </collision>
+      <xacro:inertial_hollow_tube_with_pose mass="${caster_wheel_m}" inner_rad="${caster_wheel_r1}" outer_rad="${caster_wheel_r}" height="${caster_wheel_l}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:inertial_hollow_tube_with_pose>
+    </link>
+
+    <joint name="${lr_prefix}_caster_fork_to_wheel_joint" type="continuous">
+      <parent link="${lr_prefix}_caster_ax2_link"/>
+      <child link="${lr_prefix}_caster_wheel_link"/>
+      <origin xyz="${caster_ax2_loc}" rpy="${degrees_90} 0 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+
+
+    <transmission name="${lr_prefix}_caster_fork_to_wheel_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${lr_prefix}_caster_fork_to_wheel_joint">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${lr_prefix}_caster_ax2_act">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    
+  </xacro:macro>
+  
+  <!-- Describe the Robot -->
+  <link name="base_link"/>
+  <xacro:homere_chassis />
+  <xacro:homere_rear_wheel  lr_prefix="left"  lr_reflect="1"/>
+  <xacro:homere_rear_wheel  lr_prefix="right" lr_reflect="-1"/>
+  <xacro:homere_caster      lr_prefix="left"  lr_reflect="1"/>
+  <xacro:homere_caster      lr_prefix="right" lr_reflect="-1"/>
+
+  <!-- IMU -->
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="imu_link" />
+  </joint>
+
+  
+</robot>

@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<robot name="homere" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find homere_description)/urdf/homere.urdf" />
+  
+  <!-- make it colorfull -->
+  <gazebo reference="chassis_link"><material>Gazebo/Green</material></gazebo>
+  <gazebo reference="left_rear_axle_carrier_link"><material>Gazebo/Red</material></gazebo>
+  <gazebo reference="right_rear_axle_carrier_link"><material>Gazebo/Red</material></gazebo>
+  <gazebo reference="left_rear_wheel_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="right_rear_wheel_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="left_caster_ax1_carrier_link"><material>Gazebo/Red</material></gazebo>
+  <gazebo reference="right_caster_ax1_carrier_link"><material>Gazebo/Red</material></gazebo>
+  <gazebo reference="left_caster_ax2_link"><material>Gazebo/Red</material></gazebo>
+  <gazebo reference="right_caster_ax2_link"><material>Gazebo/Red</material></gazebo>
+  <gazebo reference="left_caster_wheel_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="right_caster_wheel_link"><material>Gazebo/Grey</material></gazebo>
+
+  <gazebo>
+    <plugin name="ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/homere</robotNamespace>
+      <robotParam>robot_description</robotParam>
+      <controlPeriod>0.01</controlPeriod>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType> 
+    </plugin>
+
+    <!--    -->
+    <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+      <alwaysOn>true</alwaysOn>
+      <frameName>imu_link</frameName>
+      <bodyName>imu_link</bodyName>
+      <topicName>imu</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>100.0</updateRate>
+    </plugin>
+    <!-- -->
+    
+  </gazebo>
+
+  <gazebo reference="imu_link">
+
+  </gazebo>
+  
+</robot>
