@@ -3,26 +3,34 @@ import time, math, rospy, numpy as np, sys
 
 import homere_control.msg, sensor_msgs.msg
 
+mode_direct, mode_vel = 0, 1
+
 class Node:
-    def __init__(self):
+    def __init__(self, mode, timeout = 0.5):
         rospy.init_node('teleop_node')
+        self.mode, self.timeout = mode, rospy.Duration(timeout)
+        self.last_joy = rospy.get_rostime() - self.timeout 
+        self.steering_input, self.driving_input = 0., 0. 
         self.ctl_input_pub = rospy.Publisher('/homere_controller/cmd', homere_control.msg.homere_controller_input, queue_size=1)
         self.ctl_in_msg = homere_control.msg.homere_controller_input()
         self.joy_sub = rospy.Subscriber('joy', sensor_msgs.msg.Joy, self.joy_cb, queue_size=1)
-        self.steering_input, self.driving_input = 0., 0. 
 
     def joy_cb(self, msg):
+        self.last_joy = rospy.get_rostime()
         self.steering_input = msg.axes[3]
         self.driving_input = msg.axes[0]
         #print(self.steering_input)
         
     def publish(self):
-        if 0:
+        if rospy.get_rostime() - self.last_joy > self.timeout:
+            self.ctl_in_msg.mode = 0 # Timeout, PWM to zero
+            self.ctl_in_msg.pwm_l,  self.ctl_in_msg.pwm_r = 0, 0
+        elif self.mode == mode_direct:
             self.ctl_in_msg.mode = 0 # PWM
             pwm_sum, pwm_dif = self.driving_input * -40, self.steering_input * 20
             self.ctl_in_msg.pwm_l = pwm_sum + pwm_dif
             self.ctl_in_msg.pwm_r = pwm_sum - pwm_dif
-        if 1:
+        elif self.mode == mode_vel:
             self.ctl_in_msg.mode = 1 # wheel rvel
             rvel_sum, rvel_dif = self.driving_input * -2., self.steering_input * -2.
             self.ctl_in_msg.rvel_l = rvel_sum + rvel_dif
@@ -32,10 +40,9 @@ class Node:
     def run(self):
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
-            #print('recorded {} messages'.format(self._d._msg_nb))
             self.publish()
             rate.sleep()
 
 if __name__ == '__main__':
-    n = Node()
+    n = Node(mode_direct)
     n.run()
