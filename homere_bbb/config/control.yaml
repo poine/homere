@@ -21,3 +21,6 @@ homere_controller:
     rw_kd: 0.
 
 
+homere_imu_controller:
+  type: imu_sensor_controller/ImuSensorController
+  publish_rate: 25

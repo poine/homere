@@ -9,16 +9,6 @@ const std::string joint_name_[NB_JOINTS] = {"left_wheel_joint","right_wheel_join
 // Mechanics
 #define GEARBOX                       100.37
 #define ENCODER_RES                     512
-//#define WHEEL_RADIUS_M                  0.03
-// Electrical hookups
-//#define STEERING_SERVO_CH               1
-//#define STEERING_SERVO_NEUTRAL          0.
-//-0.11
-//#define STEERING_SERVO_POLARITY        -1
-//#define MOTOR_CHANNEL_L                 1
-//#define MOTOR_CHANNEL_R                 2
-//#define MOTOR_POLARITY_L               -1
-//#define MOTOR_POLARITY_R               -1
 #define ENCODER_CHANNEL_L               1
 #define ENCODER_CHANNEL_R               2
 #define ENCODER_POLARITY_L              -1
@@ -26,6 +16,9 @@ const std::string joint_name_[NB_JOINTS] = {"left_wheel_joint","right_wheel_join
 // IMU
 #define IMU_SAMPLE_RATE_HZ 100
 #define IMU_DT (1./IMU_SAMPLE_RATE_HZ)
+
+
+static HomereHardwareInterface* _foo_hw_interf = NULL;
 
 void _imu_callback(void* data) { reinterpret_cast<HomereHardwareInterface*>(data)->IMUCallback(); }
 
@@ -40,25 +33,15 @@ HomereHardwareInterface::HomereHardwareInterface()
   ROS_INFO_STREAM_NAMED(__NAME, "Registering interfaces");
   // register joints
   for (int i=0; i<NB_JOINTS; i++) {
-    joint_position_[i] = 0.;
-    joint_velocity_[i] = 0.;
-    joint_effort_[i] = 0.;
-    joint_effort_command_[i] = 0.;
-    joint_position_command_[i] = 0.;
+    joint_position_[i] = joint_velocity_[i] = joint_effort_[i] = 0.;
     js_interface_.registerHandle(hardware_interface::JointStateHandle(
-        joint_name_[i], &joint_position_[i], &joint_velocity_[i], &joint_effort_[i]));
-    //if (i<2) {
-      ej_interface_.registerHandle(hardware_interface::JointHandle(
+      joint_name_[i], &joint_position_[i], &joint_velocity_[i], &joint_effort_[i]));
+    joint_effort_command_[i] = 0.;
+    ej_interface_.registerHandle(hardware_interface::JointHandle(
 	js_interface_.getHandle(joint_name_[i]), &joint_effort_command_[i]));
-      //}
-    // else {
-    //   pj_interface_.registerHandle(hardware_interface::JointHandle(
-    //     js_interface_.getHandle(joint_name_[i]), &joint_position_command_[i]));
-    // }
   }
   registerInterface(&js_interface_);
   registerInterface(&ej_interface_);
-  registerInterface(&pj_interface_);
   
   // register IMU (with ROS)
   imu_data_.name = "imu";
@@ -87,7 +70,9 @@ HomereHardwareInterface::~HomereHardwareInterface() {
 
 static void __mpu_cbk(void)
 {
-  //printf(" __mpu_cbk\n");
+  //ros::Time now = ros::Time::now();
+  //std::cerr << " __mpu_cbk " << now << std::endl;
+  _foo_hw_interf->IMUCallback();
 }
 /*******************************************************************************
  *
@@ -106,10 +91,12 @@ bool HomereHardwareInterface::start(const ros::Time& time) {
   conf.gpio_interrupt_pin_chip = GPIO_INT_PIN_CHIP;
   conf.gpio_interrupt_pin = GPIO_INT_PIN_PIN;
   conf.dmp_sample_rate = IMU_SAMPLE_RATE_HZ;
+  conf.dmp_fetch_accel_gyro = true;
   if(rc_mpu_initialize_dmp(&rc_mpu_data_, conf)){
     ROS_ERROR("in HomereHardwareInterface::start: can't talk to IMU, all hope is lost\n");
     return false;
   }
+  _foo_hw_interf = this;
   rc_mpu_set_dmp_callback(&__mpu_cbk);
   //  rc_imu_config_t imu_config = rc_default_imu_config();
   //  imu_config.dmp_sample_rate = IMU_SAMPLE_RATE_HZ;
@@ -160,12 +147,8 @@ void HomereHardwareInterface::write() {
 
   float dutyL =  joint_effort_command_[0];
   float dutyR =  joint_effort_command_[1];
-  //float steering = joint_position_command_[2];
-  //ROS_INFO(" write HW %f %f %f", dutyL, dutyR, steering);
+  //ROS_INFO(" write HW %f %f", dutyL, dutyR);
   sabert_.send_drive(dutyL, dutyR);
-  //rc_set_motor(MOTOR_CHANNEL_L, MOTOR_POLARITY_L * dutyL);
-  //rc_set_motor(MOTOR_CHANNEL_R, MOTOR_POLARITY_R * dutyR);
-  //rc_send_servo_pulse_normalized( STEERING_SERVO_CH, STEERING_SERVO_NEUTRAL+steering*STEERING_SERVO_POLARITY );
 }
 
 /*******************************************************************************
@@ -174,8 +157,6 @@ void HomereHardwareInterface::write() {
  *******************************************************************************/
 bool HomereHardwareInterface::shutdown() {
   ROS_INFO("in HomereHardwareInterface::shutdown");
-  //rc_power_off_imu();
-  //rc_cleanup();
   rc_encoder_eqep_cleanup();
   rc_mpu_power_off();
   return true;
@@ -185,23 +166,25 @@ bool HomereHardwareInterface::shutdown() {
  *
  *
  *******************************************************************************/
+#define _DEG2RAD(_D) _D/180.*M_PI
 void HomereHardwareInterface::IMUCallback(void) {
 
   // Called by rc IMU thread
+  // copy IMU measurements from librobotic to ROS
   // imu_orientation is in the order of geometry_msg, ie x, y, z, w
   // wheras dmp_quat is w, x, y, z
-  //imu_orientation_[0] = rc_imu_data_.dmp_quat[1];
-  //imu_orientation_[1] = rc_imu_data_.dmp_quat[2];
-  //imu_orientation_[2] = rc_imu_data_.dmp_quat[3];
-  //imu_orientation_[3] = rc_imu_data_.dmp_quat[0];
+  imu_orientation_[0] = rc_mpu_data_.dmp_quat[1];
+  imu_orientation_[1] = rc_mpu_data_.dmp_quat[2];
+  imu_orientation_[2] = rc_mpu_data_.dmp_quat[3];
+  imu_orientation_[3] = rc_mpu_data_.dmp_quat[0];
 
-  //imu_angular_velocity_[0] = rc_imu_data_.gyro[0]/180.*M_PI; // WTF are those units !!!
-  //imu_angular_velocity_[1] = rc_imu_data_.gyro[1]/180.*M_PI;
-  //imu_angular_velocity_[2] = rc_imu_data_.gyro[2]/180.*M_PI; 
+  imu_angular_velocity_[0] = _DEG2RAD(rc_mpu_data_.gyro[0]); // WTF are those units !!!
+  imu_angular_velocity_[1] = rc_mpu_data_.gyro[1]/180.*M_PI;
+  imu_angular_velocity_[2] = rc_mpu_data_.gyro[2]/180.*M_PI; 
 
-  //imu_linear_acceleration_[0] = rc_imu_data_.accel[0];
-  //imu_linear_acceleration_[1] = rc_imu_data_.accel[1];
-  //imu_linear_acceleration_[2] = rc_imu_data_.accel[2];
+  imu_linear_acceleration_[0] = rc_mpu_data_.accel[0];
+  imu_linear_acceleration_[1] = rc_mpu_data_.accel[1];
+  imu_linear_acceleration_[2] = rc_mpu_data_.accel[2];
 
 }
 
@@ -230,6 +213,7 @@ int main(int argc, char** argv)
       //pthread_mutex_unlock( &rc_imu_read_mutex );
       
       ros::Time now = ros::Time::now();
+      //std::cerr << " __mpu_unlock: " << now << std::endl;
       hw.read(now);
       cm.update(now, period);
       hw.write();

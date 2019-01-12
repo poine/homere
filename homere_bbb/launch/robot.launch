@@ -4,5 +4,8 @@
   <include file="$(find homere_bbb)/launch/hardware.launch"/>
   <!-- Starts control -->
   <include file="$(find homere_bbb)/launch/control.launch"/>
+  <!-- Starts a teleop node ( 13% load, not good...) -->
+  <node name="teleop_node" pkg="homere_control" type="teleop_node.py" />
+
 </launch>
 

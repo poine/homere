@@ -41,7 +41,6 @@ class HomereHardwareInterface : public hardware_interface::RobotHW
   double joint_velocity_[NB_JOINTS];
   double joint_effort_[NB_JOINTS];
   double joint_effort_command_[NB_JOINTS];
-  double joint_position_command_[NB_JOINTS];
   ros::Time last_enc_read_;
   
   // IMU
@@ -52,10 +51,10 @@ class HomereHardwareInterface : public hardware_interface::RobotHW
 
   hardware_interface::JointStateInterface    js_interface_;
   hardware_interface::EffortJointInterface   ej_interface_;
-  hardware_interface::PositionJointInterface pj_interface_;
   hardware_interface::ImuSensorInterface     imu_sensor_interface_;
 
-  rc_mpu_data_t rc_mpu_data_;
+  rc_mpu_data_t rc_mpu_data_; // shared with robotic_lib
+
   // SaberTooth
   SaberTooth sabert_;
 };

@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Starts the hardware on the real robot -->
-  <node name="robot_hardware" pkg="homere_bbb" type="homere_hardware_interface_node" />
+  <node name="robot_hardware" pkg="homere_bbb" type="homere_hardware_interface_node" output="screen"/>
+
+  <!--<node name="robot_hardware" pkg="homere_bbb" type="test_uid_gid.py" output="screen"/> -->
+  
 </launch>
 
