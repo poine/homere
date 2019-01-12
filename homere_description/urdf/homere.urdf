@@ -88,7 +88,7 @@
       <xacro:inertial_null/>
     </link>
 
-    <joint name="${lr_prefix}_wheel_joint" type="fixed">
+    <joint name="${lr_prefix}_bl_to_axl_joint" type="fixed">
       <parent link="base_link"/>
       <child link="${lr_prefix}_rear_axle_carrier_link"/>
       <origin xyz="0 ${lr_reflect * ((wheel_c / 2))} 0"/>
@@ -111,7 +111,7 @@
       </xacro:inertial_hollow_tube_with_pose>
     </link>
 
-    <joint name="${lr_prefix}_rear_axle_joint" type="continuous">
+    <joint name="${lr_prefix}_wheel_joint" type="continuous">
       <parent link="${lr_prefix}_rear_axle_carrier_link"/>
       <child link="${lr_prefix}_rear_wheel_link"/>
       <origin rpy="${degrees_90} 0 ${degrees_180}"/>

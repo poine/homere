@@ -53,6 +53,7 @@ namespace homere_controller {
     controller_nh.getParam("rw_ki", rw_ki);
     controller_nh.getParam("lw_kd", lw_kd);
     controller_nh.getParam("rw_kd", rw_kd);
+    std::cerr << "in HomereController::init" << std::endl;
     std::cerr << "Left Wheel PID kp:" << lw_kp << " ki:" << lw_ki << " kd:" << lw_kd << std::endl;
     std::cerr << "Righ Wheel PID kp:" << rw_kp << " ki:" << rw_ki << " kd:" << rw_kd << std::endl;
     const double dt = 1.0/SAMPLE_RATE;

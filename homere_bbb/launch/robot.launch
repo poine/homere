@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-
-  <node name="robot_hardware" pkg="homere_bbb" type="homere_hardware_interface_node" />
-
+  <!-- Starts the hardware on the real robot -->
+  <include file="$(find homere_bbb)/launch/hardware.launch"/>
+  <!-- Starts control -->
+  <include file="$(find homere_bbb)/launch/control.launch"/>
 </launch>
 

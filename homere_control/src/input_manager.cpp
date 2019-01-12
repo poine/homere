@@ -12,7 +12,7 @@ namespace homere_controller {
    *
    *******************************************************************************/
   bool InputManager::init(hardware_interface::RobotHW* hw, ros::NodeHandle &controller_nh) {
-    sub_command_vel_ = controller_nh.subscribe("cmd_vel", 1, &InputManager::cmdVelCallback, this);
+    //sub_command_vel_ = controller_nh.subscribe("cmd_vel", 1, &InputManager::cmdVelCallback, this);
     sub_command_ = controller_nh.subscribe("cmd", 1, &InputManager::cmdCallback, this);
     return true;
   }
@@ -26,10 +26,8 @@ namespace homere_controller {
     
     rt_commands_ = *(command_.readFromRT());
     const double dt = (now - rt_commands_.stamp).toSec();
-    if (dt > 0.5) {
+    if (dt > 0.5) { // timeout
       rt_commands_.mode = 0;
-      rt_commands_.lin = 0.;
-      rt_commands_.ang = 0.;
       rt_commands_.pwm_l = 0;
       rt_commands_.pwm_r = 0;
     }
@@ -40,6 +38,7 @@ namespace homere_controller {
    *
    *******************************************************************************/
   void InputManager::cmdVelCallback(const geometry_msgs::Twist& command) {
+    nrt_ros_command_struct_.mode   = 42;  // Maybe one day we'll accept that to be compatible with ros guidance
     nrt_ros_command_struct_.ang   = command.angular.z;
     nrt_ros_command_struct_.lin   = command.linear.x;
     nrt_ros_command_struct_.stamp = ros::Time::now();
