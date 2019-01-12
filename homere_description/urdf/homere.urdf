@@ -40,17 +40,9 @@
   <!-- Import Macros -->
   <xacro:include filename="$(find homere_description)/urdf/inertias.urdf.xacro" />
 
-  <material name="transp_green">
-    <color rgba="0 0.8 0 0.5"/>
-  </material>
-
-  <material name="transp_yellow">
-    <color rgba="0.8 0.8 0 0.5"/>
-  </material>
-
-  <material name="tire_material">
-    <color rgba="0 0 0.8 0.5"/>
-  </material>
+  <material name="transp_green"><color rgba="0 0.8 0 0.5"/></material>
+  <material name="transp_yellow"><color rgba="0.8 0.8 0 0.5"/></material>
+  <material name="tire_material"><color rgba="0 0 0.8 0.5"/></material>
 
   
   <!-- Chassis -->
@@ -96,7 +88,7 @@
       <xacro:inertial_null/>
     </link>
 
-    <joint name="${lr_prefix}_bl_to_axle_carrier_joint" type="fixed">
+    <joint name="${lr_prefix}_wheel_joint" type="fixed">
       <parent link="base_link"/>
       <child link="${lr_prefix}_rear_axle_carrier_link"/>
       <origin xyz="0 ${lr_reflect * ((wheel_c / 2))} 0"/>
@@ -245,6 +237,6 @@
     <parent link="base_link" />
     <child link="imu_link" />
   </joint>
-
+  
   
 </robot>

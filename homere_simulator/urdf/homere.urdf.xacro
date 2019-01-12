@@ -23,8 +23,33 @@
       <controlPeriod>0.01</controlPeriod>
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType> 
     </plugin>
+  </gazebo>
 
-    <!--    -->
+  <!--
+  <gazebo reference="imu_link">
+    <gravity>true</gravity>
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>imu</topicName>
+        <bodyName>imu_link</bodyName>
+        <updateRateHZ>10.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
+    </gazebo>
+  -->
+  <!-- -->
+ <gazebo reference="imu_link">
+ </gazebo>
+ <gazebo>
     <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
       <alwaysOn>true</alwaysOn>
       <frameName>imu_link</frameName>
@@ -34,12 +59,22 @@
       <gaussianNoise>0.0</gaussianNoise>
       <updateRate>100.0</updateRate>
     </plugin>
-    <!-- -->
-    
   </gazebo>
-
-  <gazebo reference="imu_link">
-
+  <!-- -->
+  <!--
+    <gazebo reference="imu_link">
+    <plugin name="imu_pluggin" filename="libhector_gazebo_ros_imu.so">
+    <updateRate>100.0</updateRate>
+    <bodyName>imu_link</bodyName>
+    <frameName>imu_link</frameName>
+    <topicName>imu</topicName>
+    <accelDrift>0.5 0.5 0.5</accelDrift>
+    <accelGaussianNoise>0.35 0.35 0.3</accelGaussianNoise>
+    <rateDrift>0.1 0.1 0.1</rateDrift>
+    <rateGaussianNoise>0.05 0.05 0.015</rateGaussianNoise>
+    <headingDrift>0.1</headingDrift>
+    <headingGaussianNoise>0.05</headingGaussianNoise>
+  </plugin>
   </gazebo>
-  
+  -->
 </robot>
