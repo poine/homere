@@ -55,14 +55,14 @@ add_message_files(
   FILES
   homere_controller_input.msg
   homere_controller_debug.msg
+  debug_wheel_ref.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+   FILES
+   srv_reset_odom.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(

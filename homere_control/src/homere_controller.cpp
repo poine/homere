@@ -17,6 +17,11 @@
 
 namespace homere_controller {
 
+  template<typename T>
+  T clamp(T x, T min, T max)
+  {
+    return std::min(std::max(min, x), max);
+  }
  
   HomereController::HomereController():
     left_wheel_duty_(0.),
@@ -53,7 +58,6 @@ namespace homere_controller {
     controller_nh.getParam("rw_ki", rw_ki);
     controller_nh.getParam("lw_kd", lw_kd);
     controller_nh.getParam("rw_kd", rw_kd);
-    std::cerr << "in HomereController::init" << std::endl;
     std::cerr << "Left Wheel PID kp:" << lw_kp << " ki:" << lw_ki << " kd:" << lw_kd << std::endl;
     std::cerr << "Righ Wheel PID kp:" << rw_kp << " ki:" << rw_ki << " kd:" << rw_kd << std::endl;
     const double dt = 1.0/SAMPLE_RATE;
@@ -61,10 +65,22 @@ namespace homere_controller {
     rc_filter_pid(&right_wheel_pid_, rw_kp, rw_ki, rw_kd, WHEEL_TF, dt);
     
     input_manager_.init(hw, controller_nh);
-    //odometry_.init(WHEEL_BASE, VELOCITY_ROLLING_WINDOW_SIZE);
-    publisher_.init(root_nh, controller_nh);
+
+    double odom_ws, odom_lr, odom_rr;
+    controller_nh.getParam("odom_ws", odom_ws);
+    controller_nh.getParam("odom_lr", odom_lr);
+    controller_nh.getParam("odom_rr", odom_rr);
+    odometry_.init(odom_ws, odom_lr, odom_rr);
+    std::cerr << "ODOM:" << odom_ws << " " << odom_lr << " " << odom_rr << std::endl;
+
+    odom_publisher_.init(root_nh, controller_nh);
     debug_publisher_.init(root_nh, controller_nh);
+    wr_debug_publisher_.init(root_nh, controller_nh);
     //raw_odom_publisher_.init(root_nh, controller_nh);
+    reset_odom_srv_  = controller_nh.advertiseService("reset_odom",  &HomereController::OnOdomReset,  this);
+
+
+    
     return true;
   }
 
@@ -73,12 +89,15 @@ namespace homere_controller {
    *
    *
    *******************************************************************************/
+#define ODOM_PARAM_WHEEL_SEP 0.56
+#define ODOM_PARAM_WHEEL_LR  0.19
+#define ODOM_PARAM_WHEEL_RR 0.19
   void HomereController::starting(const ros::Time& now) {
     ROS_INFO_STREAM_NAMED(__NAME, "in HomereController::starting");
-    odometry_.setWheelParams(0.56, 0.19, 0.19);
-    odometry_.init(now);
-    //odometry_.starting(now);
-    publisher_.starting(now);
+    //odometry_.setWheelParams(ODOM_PARAM_WHEEL_SEP, ODOM_PARAM_WHEEL_LR, ODOM_PARAM_WHEEL_RR);
+    odometry_.starting(now);
+    odom_publisher_.starting(now);
+    wr_debug_publisher_.starting(now);
     //hw_->switch_motors_on();
   }
 
@@ -87,9 +106,9 @@ namespace homere_controller {
    *
    *******************************************************************************/
   void HomereController::update(const ros::Time& now, const ros::Duration& dt) {
-    double left_pos = left_wheel_joint_.getPosition();
-    double right_pos = right_wheel_joint_.getPosition();
-    odometry_.update(left_pos, right_pos, now);
+    double lw_angle = left_wheel_joint_.getPosition();
+    double rw_angle = right_wheel_joint_.getPosition();
+    odometry_.update(lw_angle, rw_angle, now);
 
     double lw_rvel = left_wheel_joint_.getVelocity();
     double lw_rvel_f = rc_filter_march(&rvel_lp_l_, lw_rvel);
@@ -106,28 +125,80 @@ namespace homere_controller {
       right_wheel_duty_ = input_manager_.rt_commands_.pwm_r;
     }
     else if (mode == 1) { // wheel rvel (in rad/s)
-      double lw_rvel_sp = input_manager_.rt_commands_.rvel_l;
-      double rw_rvel_sp = input_manager_.rt_commands_.rvel_r;
-
-      double lw_err = lw_rvel_sp - lw_rvel;
-      double rw_err = rw_rvel_sp - rw_rvel;
-    
-      double lw_feedback = rc_filter_march(&left_wheel_pid_, lw_err);
-      double rw_feedback = rc_filter_march(&right_wheel_pid_, rw_err);
-      double lw_feedforward = lw_feedforward_.get(lw_rvel_sp);
-      double rw_feedforward = rw_feedforward_.get(rw_rvel_sp);
-      left_wheel_duty_  =  lw_feedforward + lw_feedback;
-      right_wheel_duty_ =  rw_feedforward + rw_feedback;
+      lw_rvel_sp_ = input_manager_.rt_commands_.rvel_l;
+      rw_rvel_sp_ = input_manager_.rt_commands_.rvel_r;
+      compute_wheel_control(lw_rvel_sp_, rw_rvel_sp_, lw_angle, rw_angle, lw_rvel, rw_rvel, dt);
+   
+    }
+    else if (mode == 42) { // lin and ang vel
+      double lin_sp = input_manager_.rt_commands_.lin;
+      double ang_sp = input_manager_.rt_commands_.ang;
+      // Compute wheels velocities:
+      lw_rvel_sp_ = (lin_sp - ang_sp * ODOM_PARAM_WHEEL_SEP / 2.0)/ODOM_PARAM_WHEEL_LR;
+      rw_rvel_sp_ = (lin_sp + ang_sp * ODOM_PARAM_WHEEL_SEP / 2.0)/ODOM_PARAM_WHEEL_RR;
+      compute_wheel_control(lw_rvel_sp_, rw_rvel_sp_, lw_angle, rw_angle, lw_rvel, rw_rvel, dt);
     }
     //std::printf("Sending %f %f\n", left_wheel_duty_, right_wheel_duty_);
     left_wheel_joint_.setCommand(left_wheel_duty_);
     right_wheel_joint_.setCommand(right_wheel_duty_);
-    debug_publisher_.publish(left_pos, right_pos, lw_rvel, rw_rvel,
+    //    debug_publisher_.publish(lw_rvel_sp_, rw_rvel_sp_, lw_angle, rw_angle, lw_rvel, rw_rvel,
+    //			     lw_rvel_f, rw_rvel_f, left_wheel_duty_, right_wheel_duty_, now);
+    debug_publisher_.publish(lw_ref_.rvel_, rw_ref_.rvel_, lw_angle, rw_angle, lw_rvel, rw_rvel,
 			     lw_rvel_f, rw_rvel_f, left_wheel_duty_, right_wheel_duty_, now);
-    publisher_.publish(odometry_.getHeading(), odometry_.getX(), odometry_.getY(),
+    wr_debug_publisher_.publish(lw_rvel_sp_, rw_rvel_sp_,
+				lw_ref_.angle_, rw_ref_.angle_,
+				lw_ref_.rvel_, rw_ref_.rvel_,
+				lw_ref_.rveld_, rw_ref_.rveld_,
+				now);
+    odom_publisher_.publish(odometry_.getHeading(), odometry_.getX(), odometry_.getY(),
 		       odometry_.getLinear(), odometry_.getAngular(), now);
   }
 
+
+
+  void HomereController::compute_wheel_control(double lw_rvel_sp, double rw_rvel_sp,
+					       double lw_angle, double rw_angle,
+					       double lw_rvel, double rw_rvel,
+					       const ros::Duration& dt) {
+    lw_ref_.update(lw_rvel_sp, dt.toSec());
+    rw_ref_.update(rw_rvel_sp, dt.toSec());
+
+    double lw_angl_err = lw_ref_.angle_ - lw_angle;
+    double rw_angl_err = rw_ref_.angle_ - rw_angle; 
+    
+    double lw_rvel_err = lw_ref_.rvel_ - lw_rvel; //lw_rvel_sp - lw_rvel;
+    double rw_rvel_err = rw_ref_.rvel_ - rw_rvel; //rw_rvel_sp - rw_rvel;
+
+    // fine
+    //double lw_feedback = rc_filter_march(&left_wheel_pid_, lw_rvel_err);
+    //double rw_feedback = rc_filter_march(&right_wheel_pid_, rw_rvel_err);
+
+
+    
+    //
+    const double Ka = 1.5, Krv = 20;
+    double lw_feedback = Ka * lw_angl_err + Krv * lw_rvel_err;
+    double rw_feedback = Ka * rw_angl_err + Krv * rw_rvel_err;
+
+    double lw_feedforward = lw_ref_.rveld_ * 20.;//0;//lw_feedforward_.get(lw_rvel_sp);
+    double rw_feedforward = rw_ref_.rveld_ * 20.;//0;//rw_feedforward_.get(rw_rvel_sp);
+
+    left_wheel_duty_  =  lw_feedforward + lw_feedback;
+    right_wheel_duty_ =  rw_feedforward + rw_feedback;
+
+    left_wheel_duty_ = clamp(left_wheel_duty_, -50., 50.);
+    right_wheel_duty_ = clamp(right_wheel_duty_, -50., 50.);
+    
+  }
+
+  // rosservice call /homere/homere_controller/reset_odom 0. 0. 0.
+  bool HomereController::OnOdomReset(homere_control::srv_reset_odom::Request  &req, homere_control::srv_reset_odom::Response &res) {
+    ROS_INFO_STREAM_NAMED(__NAME, "in HomereController::OnOdomReset");
+    odometry_.reset(req.x0, req.y0, req.psi0);
+    return true;
+  }
+
+  
   /*******************************************************************************
    *
    *

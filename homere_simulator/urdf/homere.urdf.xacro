@@ -21,12 +21,37 @@
       <robotNamespace>/homere</robotNamespace>
       <robotParam>robot_description</robotParam>
       <controlPeriod>0.01</controlPeriod>
-      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType> 
+      <!--<robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>-->
+      <robotSimType>homere_simulator/HomereHardwareInterface</robotSimType>
     </plugin>
   </gazebo>
 
-  <!--
-  <gazebo reference="imu_link">
+  <gazebo>
+    <plugin name="ground_truth" filename="libgazebo_ros_p3d.so">
+      <frameName>world</frameName>
+      <bodyName>base_link</bodyName>
+      <topicName>homere/base_link_truth</topicName>
+      <updateRate>30.0</updateRate>
+    </plugin>
+  </gazebo>
+
+
+  <!-- GazeboRosImu -->
+  <!-- 
+  <gazebo>
+    <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+      <robotNamespace>homere</robotNamespace>
+      <alwaysOn>true</alwaysOn>
+      <bodyName>imu_link</bodyName>
+      <topicName>imu</topicName>
+      <serviceName>imu_service</serviceName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <updateRate>100.0</updateRate>
+    </plugin>
+  </gazebo>
+  -->
+  <!-- GazeboRosImuSensor -->
+    <gazebo reference="imu_link">
     <gravity>true</gravity>
     <sensor name="imu_sensor" type="imu">
       <always_on>true</always_on>
@@ -34,9 +59,10 @@
       <visualize>true</visualize>
       <topic>__default_topic__</topic>
       <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-        <topicName>imu</topicName>
+        <robotNamespace>/homere</robotNamespace>
+	<topicName>imu</topicName>
         <bodyName>imu_link</bodyName>
-        <updateRateHZ>10.0</updateRateHZ>
+        <updateRateHZ>100.0</updateRateHZ>
         <gaussianNoise>0.0</gaussianNoise>
         <xyzOffset>0 0 0</xyzOffset>
         <rpyOffset>0 0 0</rpyOffset>
@@ -44,9 +70,35 @@
       </plugin>
       <pose>0 0 0 0 0 0</pose>
     </sensor>
-    </gazebo>
+  </gazebo>
+
+  
+  <!--
+  <gazebo>
+    <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+      <always_on>true</always_on>
+      <updateRate>100.0</updateRate>
+      <bodyName>imu_link</bodyName>
+      <topicName>imu</topicName>
+      <gaussianNoise>0.0</gaussianNoise>
+      <xyzOffset>0 0 0</xyzOffset>
+      <rpyOffset>0 0 0</rpyOffset>
+      <serviceName>imu_service</serviceName>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+    </sensor>
+  </gazebo>
   -->
-  <!-- -->
+
+    
+  <!--
  <gazebo reference="imu_link">
  </gazebo>
  <gazebo>
@@ -60,7 +112,7 @@
       <updateRate>100.0</updateRate>
     </plugin>
   </gazebo>
-  <!-- -->
+  -->
   <!--
     <gazebo reference="imu_link">
     <plugin name="imu_pluggin" filename="libhector_gazebo_ros_imu.so">

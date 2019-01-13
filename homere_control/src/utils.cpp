@@ -20,7 +20,7 @@ namespace homere_controller {
 
   double FeedForward::get(double rvel) {
     Eigen::MatrixXd tmp1 = rvel * W1_ + B1_;
-    for( int i = 0; i < tmp1.rows(); ++i )
+    for( int i = 0; i < tmp1.rows(); ++i ) // RELU
       for (int j=0; j < tmp1.cols() ; ++j)
 	if (tmp1(i,j) < 0.)
     	  tmp1(i,j) = 0.;
@@ -45,7 +45,26 @@ namespace homere_controller {
   //   B2_ << 371.99803428;
   // }
 
+  WheelRef::WheelRef(double omega, double xi):
+    omega_(omega),
+    xi_(xi),
+    angle_(0.),
+    rvel_(0.),
+    rveld_(0.),
+    rveldd_(0.) {
+    
+  }
 
+  void WheelRef::update(const double& rvel_sp, const double& dt) {
+    //const double tau = 0.75;
+    //rveld_ = -1/tau*(rvel_- rvel_sp);
+    angle_ += rvel_ * dt;
+    rvel_ += rveld_ * dt;
+    rveld_ += rveldd_ * dt;
+    rveldd_ = -2*xi_*omega_ * rveld_ - omega_*omega_*(rvel_- rvel_sp);
+  }
+
+  
 }
 
 #include "homere_control/generated/feedforward1.h"

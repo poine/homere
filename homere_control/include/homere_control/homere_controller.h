@@ -17,6 +17,8 @@
 #include "homere_control/publisher.h"
 #include "homere_control/utils.h"
 
+#include "homere_control/srv_reset_odom.h"
+
 namespace homere_controller {
 
   class HomereController :
@@ -39,19 +41,28 @@ namespace homere_controller {
 
       homere_controller::InputManager   input_manager_;
       homere_controller::Odometry       odometry_;
-      homere_controller::Publisher      publisher_;
+      homere_controller::OdomPublisher  odom_publisher_;
       homere_controller::DebugPublisher debug_publisher_;
-
+      homere_controller::WRDebugPublisher wr_debug_publisher_;
+      
+      ros::ServiceServer reset_odom_srv_;
+      
       homere_controller::LeftFeedForward    lw_feedforward_;
       homere_controller::RightFeedForward   rw_feedforward_;
       
       // filter structures
       rc_filter_t rvel_lp_l_, rvel_lp_r_;
       rc_filter_t left_wheel_pid_, right_wheel_pid_;
-      
+      double lw_rvel_sp_, rw_rvel_sp_;
+      WheelRef lw_ref_, rw_ref_;
       // values output to the hardware interface
       double left_wheel_duty_, right_wheel_duty_;
-      
+
+      void compute_wheel_control(double lw_rvel_sp, double rw_rvel_sp,
+				 double lw_angle, double rw_angle,
+				 double lw_rvel, double rw_rvel,
+				 const ros::Duration& dt);
+      bool OnOdomReset(homere_control::srv_reset_odom::Request  &req, homere_control::srv_reset_odom::Response &res);
     };
 }
 

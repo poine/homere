@@ -1,4 +1,8 @@
 #include <homere_control/odometry.h>
+//
+// original:
+// https://github.com/ros-controls/ros_controllers/blob/melodic-devel/diff_drive_controller/src/odometry.cpp
+//
 
 namespace homere_controller
 {
@@ -23,11 +27,15 @@ namespace homere_controller
 
   }
 
-  void Odometry::init(const ros::Time& time)
+  void Odometry::init(double wheel_separation, double left_wheel_radius, double right_wheel_radius)
   {
-    // Reset accumulators and timestamp:
-    resetAccumulators();
-    timestamp_ = time;
+    setWheelParams(wheel_separation, left_wheel_radius, right_wheel_radius);
+  }
+  
+  void Odometry::starting(const ros::Time& time) {
+      // Reset accumulators and timestamp:
+      resetAccumulators();
+      timestamp_ = time;
   }
 
  bool Odometry::update(double left_pos, double right_pos, const ros::Time &time)
@@ -50,7 +58,8 @@ namespace homere_controller
     const double linear  = (right_wheel_est_vel_ + left_wheel_est_vel_) * 0.5 ;
     const double angular = (right_wheel_est_vel_ - left_wheel_est_vel_) / wheel_separation_;
 
-
+    integrateExact(linear, angular);
+  
     /// We cannot estimate the speed with very small time intervals:
     const double dt = (time - timestamp_).toSec();
     if (dt < 0.0001)
@@ -69,6 +78,9 @@ namespace homere_controller
   }
   
 
+  void Odometry::reset(double x, double y, double psi) {
+    x_ = x; y_=y; heading_=psi;
+  }
   
   void Odometry::setWheelParams(double wheel_separation, double left_wheel_radius, double right_wheel_radius)
   {
@@ -82,4 +94,37 @@ namespace homere_controller
     linear_acc_ = RollingMeanAcc(RollingWindow::window_size = velocity_rolling_window_size_);
     angular_acc_ = RollingMeanAcc(RollingWindow::window_size = velocity_rolling_window_size_);
   }
+
+
+  void Odometry::integrateRungeKutta2(double linear, double angular)
+  {
+    const double direction = heading_ + angular * 0.5;
+
+    /// Runge-Kutta 2nd order integration:
+    x_       += linear * cos(direction);
+    y_       += linear * sin(direction);
+    heading_ += angular;
+  }
+
+  /**
+   * \brief Other possible integration method provided by the class
+   * \param linear
+   * \param angular
+   */
+  void Odometry::integrateExact(double linear, double angular)
+  {
+    if (fabs(angular) < 1e-6)
+      integrateRungeKutta2(linear, angular);
+    else
+    {
+      /// Exact integration (should solve problems when angular is zero):
+      const double heading_old = heading_;
+      const double r = linear/angular;
+      heading_ += angular;
+      x_       +=  r * (sin(heading_) - sin(heading_old));
+      y_       += -r * (cos(heading_) - cos(heading_old));
+    }
+  }
+
+
 }

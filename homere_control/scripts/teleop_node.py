@@ -9,9 +9,9 @@ class Node:
     def __init__(self, mode, timeout = 0.5):
         rospy.init_node('teleop_node')
         self.mode, self.timeout = mode, rospy.Duration(timeout)
-        self.last_joy = rospy.get_rostime() - self.timeout 
+        self.last_joy = rospy.get_rostime()
         self.steering_input, self.driving_input = 0., 0. 
-        self.ctl_input_pub = rospy.Publisher('/homere_controller/cmd', homere_control.msg.homere_controller_input, queue_size=1)
+        self.ctl_input_pub = rospy.Publisher('/homere/homere_controller/cmd', homere_control.msg.homere_controller_input, queue_size=1)
         self.ctl_in_msg = homere_control.msg.homere_controller_input()
         self.joy_sub = rospy.Subscriber('joy', sensor_msgs.msg.Joy, self.joy_cb, queue_size=1)
 

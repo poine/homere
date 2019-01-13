@@ -1,0 +1,9 @@
+time    stamp
+float64 lw_sp_rvel
+float64 rw_sp_rvel
+float64 lw_ref_angle
+float64 rw_ref_angle
+float64 lw_ref_rvel
+float64 rw_ref_rvel
+float64 lw_ref_rveld
+float64 rw_ref_rveld

@@ -27,6 +27,21 @@ namespace homere_controller {
   public:
     RightFeedForward();
   };
+
+  // Reference model for wheel
+  class WheelRef {
+  public:
+    WheelRef(double omega=1.5, double xi=0.9);
+    void update(const double& setpoint, const double& dt);
+    double angle_;
+    double rvel_;
+    double rveld_;
+    double rveldd_;
+  private:
+    double omega_;
+    double xi_;
+  };
+
   
 }
 

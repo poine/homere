@@ -4,21 +4,30 @@
 <robot name="homere" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- dimensions -->
-  <xacro:property name="chassis_a"        value="0.7" />
-  <xacro:property name="chassis_b"        value="0.5" />
-  <xacro:property name="chassis_c"        value="0.1" />
+
+  <!-- chassis -->
+  <xacro:property name="chassis_l"        value="0.7" />
+  <xacro:property name="chassis_w"        value="0.5" />
+  <xacro:property name="chassis_h"        value="0.1" />
   <xacro:property name="chassis_m"        value="5."  />
   <xacro:property name="chassis_h_offset" value="0.15"/>
   <xacro:property name="chassis_v_offset" value="0.1" />
   
-  <xacro:property name="wheel_a"          value="0.2" />
-  <xacro:property name="wheel_b"          value="0.1" />
+  <!-- main wheels -->
+  <xacro:property name="wheel_r"          value="0.2" />
+  <xacro:property name="wheel_r1"         value="0.1" />
+  <xacro:property name="wheel_l"          value="0.1" />
   <xacro:property name="wheel_c"          value="0.5" />
-  <xacro:property name="wheel_d"          value="0.1" />
   <xacro:property name="wheel_e"          value="0."  />
   <xacro:property name="wheel_f"          value="0.05"/>
   <xacro:property name="wheel_m"          value="1."  />
 
+  <xacro:property name="wheel_axle_joint_eff_limit"  value="204.95"/>
+  <xacro:property name="wheel_axle_joint_vel_limit"  value="39.02"/>
+  <xacro:property name="wheel_axle_joint_damping"    value="0.1" />
+  <xacro:property name="wheel_axle_joint_friction"   value="0.1" />
+
+  <!-- caster wheels -->
   <xacro:property name="caster_ax1_l"     value="0.1"  /> <!-- size and location !-->
   <xacro:property name="caster_ax1_r"     value="0.025"/> <!-- of vertical axle  !-->
   <xacro:property name="caster_ax1_dx"    value="0.5"  /> <!-- wrt base_link     !-->
@@ -51,17 +60,17 @@
       <visual>
 	<origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <box size="${chassis_a} ${chassis_b} ${chassis_c}"/>
+          <box size="${chassis_l} ${chassis_w} ${chassis_h}"/>
         </geometry>
 	<material name="transp_yellow"/>
       </visual>
       <collision>
         <origin xyz="0 0 0"/>
         <geometry>
-          <box size="${chassis_a} ${chassis_b} ${chassis_c}"/>
+          <box size="${chassis_l} ${chassis_w} ${chassis_h}"/>
         </geometry>
       </collision>
-      <xacro:inertial_cuboid_with_pose mass="${chassis_m}" x_length="${chassis_a}" y_length="${chassis_b}" z_length="${chassis_c}">
+      <xacro:inertial_cuboid_with_pose mass="${chassis_m}" x_length="${chassis_l}" y_length="${chassis_w}" z_length="${chassis_h}">
         <origin xyz="0 0 0" rpy="0 0 0"/>
       </xacro:inertial_cuboid_with_pose>
     </link>
@@ -95,18 +104,18 @@
     </joint>
   
     <!-- Tire -->
-    <xacro:property name="_wheel_xyz_origin" value="0 0 ${lr_reflect * (wheel_f/2 + wheel_b / 2)}" scope="local"/>
+    <xacro:property name="_wheel_xyz_origin" value="0 0 ${lr_reflect * (wheel_f/2 + wheel_l / 2)}" scope="local"/>
     <link name="${lr_prefix}_rear_wheel_link">
       <visual>
 	<origin xyz="${_wheel_xyz_origin}"/>
-        <geometry><cylinder radius="${wheel_a}" length="${wheel_b}"/></geometry>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_l}"/></geometry>
         <material name="tire_material"/>
       </visual>
       <collision>
         <origin xyz="${_wheel_xyz_origin}"/>
-        <geometry><cylinder radius="${wheel_a}" length="${wheel_b}"/></geometry>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_l}"/></geometry>
       </collision>
-      <xacro:inertial_hollow_tube_with_pose mass="${wheel_m}" inner_rad="${wheel_d}" outer_rad="${wheel_a}" height="${wheel_b}">
+      <xacro:inertial_hollow_tube_with_pose mass="${wheel_m}" inner_rad="${wheel_r1}" outer_rad="${wheel_r}" height="${wheel_l}">
         <origin xyz="${_wheel_xyz_origin}" rpy="0 0 0"/>
       </xacro:inertial_hollow_tube_with_pose>
     </link>
@@ -118,16 +127,17 @@
       <axis xyz="0 0 1"/>
       <!--
 	  <limit effort="${wheel_axle_joint_eff_limit}" velocity="${wheel_axle_joint_vel_limit}"/>
-	  <dynamic damping="${wheel_axle_joint_damping}" friction="{wheel_axle_joint_friction}"/>
       -->
+      <dynamic damping="${wheel_axle_joint_damping}" friction="{wheel_axle_joint_friction}"/>
+
     </joint>
 
-    <transmission name="${lr_prefix}_rear_axle_trans">
+    <transmission name="${lr_prefix}_wheel_trans">
       <type>transmission_interface/SimpleTransmission</type>
-      <joint name="${lr_prefix}_rear_axle_joint">
+      <joint name="${lr_prefix}_wheel_joint">
         <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
       </joint>
-      <actuator name="${lr_prefix}_rear_axle_act">
+      <actuator name="${lr_prefix}_wheel_act">
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
@@ -231,7 +241,9 @@
   <xacro:homere_caster      lr_prefix="right" lr_reflect="-1"/>
 
   <!-- IMU -->
-  <link name="imu_link"/>
+  <link name="imu_link">
+    <visual><geometry><box size="0.1 0.1 0.1"/></geometry></visual>
+  </link>
   <joint name="imu_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="base_link" />

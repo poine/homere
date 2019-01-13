@@ -7,10 +7,10 @@
   
   <!-- gazebo_control launch file -->
   <rosparam command="load" file="$(find homere_simulator)/config/control.yaml" />
-  <arg name="new_ctl" default="true"/>
-  <group if="$(arg new_ctl)">
+  <arg name="load_controllers" default="true"/>
+  <group if="$(arg load_controllers)">
     <node name="base_controller_spawner" pkg="controller_manager" type="spawner"
-	  output="screen" respawn="false" ns="/homere" args="--namespace=/homere homere_joint_publisher homere_controller"/>
+	  output="screen" respawn="false" ns="/homere" args="--namespace=/homere homere_joint_publisher homere_imu_controller homere_controller"/>
   </group>
   
   <!-- start gazebo simulation -->

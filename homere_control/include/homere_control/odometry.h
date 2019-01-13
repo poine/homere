@@ -17,7 +17,8 @@ namespace homere_controller
   public:
 
     Odometry(size_t velocity_rolling_window_size = 10);
-    void init(const ros::Time &time);
+    void init(double wheel_separation, double left_wheel_radius, double right_wheel_radius);
+    void starting(const ros::Time &time);
     bool update(double left_pos, double right_pos, const ros::Time &time);
 
     void setWheelParams(double wheel_separation, double left_wheel_radius, double right_wheel_radius);
@@ -68,7 +69,8 @@ namespace homere_controller
 
     double getLWrvel() const { return left_wheel_est_vel_; }
     double getRWrvel() const { return right_wheel_est_vel_; }
-    
+    void reset(double x, double y, double psi);
+      
   private:
     typedef bacc::accumulator_set<double, bacc::stats<bacc::tag::rolling_mean> > RollingMeanAcc;
     typedef bacc::tag::rolling_window RollingWindow;
@@ -104,6 +106,10 @@ namespace homere_controller
     size_t velocity_rolling_window_size_;
     RollingMeanAcc linear_acc_;
     RollingMeanAcc angular_acc_;
+
+    void integrateRungeKutta2(double linear, double angular);
+    void integrateExact(double linear, double angular);
+    
   };
 }
   

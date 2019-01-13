@@ -1,4 +1,6 @@
 time[15]    stamp
+float64[15] lw_rvel_sp
+float64[15] rw_rvel_sp
 float64[15] lw_angle
 float64[15] rw_angle
 float64[15] lw_rvel
