@@ -17,6 +17,7 @@ homere:
     rw_ki: 1.
     lw_kd: 2.
     rw_kd: 2.
+# 0.75 is good 0.70 is bad
     odom_ws: 0.75
     odom_lr: 0.2
     odom_rr: 0.2

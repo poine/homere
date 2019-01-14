@@ -32,7 +32,7 @@ class Node:
             self.ctl_in_msg.pwm_r = pwm_sum - pwm_dif
         elif self.mode == mode_vel:
             self.ctl_in_msg.mode = 1 # wheel rvel
-            rvel_sum, rvel_dif = self.driving_input * -2., self.steering_input * -2.
+            rvel_sum, rvel_dif = self.driving_input * -3., self.steering_input * 2.
             self.ctl_in_msg.rvel_l = rvel_sum + rvel_dif
             self.ctl_in_msg.rvel_r = rvel_sum - rvel_dif
         self.ctl_input_pub.publish(self.ctl_in_msg)
@@ -44,5 +44,5 @@ class Node:
             rate.sleep()
 
 if __name__ == '__main__':
-    n = Node(mode_direct)
+    n = Node(mode_vel)
     n.run()
