@@ -52,7 +52,9 @@ namespace homere_controller {
       
       // filter structures
       rc_filter_t rvel_lp_l_, rvel_lp_r_;
+
       rc_filter_t left_wheel_pid_, right_wheel_pid_;
+      double lw_ang_sum_err_, rw_ang_sum_err_;
       double lw_rvel_sp_, rw_rvel_sp_;
       WheelRef lw_ref_, rw_ref_;
       // values output to the hardware interface

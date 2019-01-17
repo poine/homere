@@ -89,9 +89,9 @@ namespace homere_controller {
    *
    *
    *******************************************************************************/
-#define ODOM_PARAM_WHEEL_SEP 0.56
-#define ODOM_PARAM_WHEEL_LR  0.19
-#define ODOM_PARAM_WHEEL_RR 0.19
+  //#define ODOM_PARAM_WHEEL_SEP 0.56
+  //#define ODOM_PARAM_WHEEL_LR  0.19
+  //#define ODOM_PARAM_WHEEL_RR 0.19
   void HomereController::starting(const ros::Time& now) {
     ROS_INFO_STREAM_NAMED(__NAME, "in HomereController::starting");
     //odometry_.setWheelParams(ODOM_PARAM_WHEEL_SEP, ODOM_PARAM_WHEEL_LR, ODOM_PARAM_WHEEL_RR);
@@ -134,8 +134,8 @@ namespace homere_controller {
       double lin_sp = input_manager_.rt_commands_.lin;
       double ang_sp = input_manager_.rt_commands_.ang;
       // Compute wheels velocities:
-      lw_rvel_sp_ = (lin_sp - ang_sp * ODOM_PARAM_WHEEL_SEP / 2.0)/ODOM_PARAM_WHEEL_LR;
-      rw_rvel_sp_ = (lin_sp + ang_sp * ODOM_PARAM_WHEEL_SEP / 2.0)/ODOM_PARAM_WHEEL_RR;
+      lw_rvel_sp_ = (lin_sp - ang_sp * odometry_.wheel_separation_ / 2.0) / odometry_.left_wheel_radius_;
+      rw_rvel_sp_ = (lin_sp + ang_sp * odometry_.wheel_separation_ / 2.0) / odometry_.right_wheel_radius_;
       compute_wheel_control(lw_rvel_sp_, rw_rvel_sp_, lw_angle, rw_angle, lw_rvel, rw_rvel, dt);
     }
     //std::printf("Sending %f %f\n", left_wheel_duty_, right_wheel_duty_);
@@ -176,9 +176,11 @@ namespace homere_controller {
 
     
     //
-    const double Ka = 1.5, Krv = 20;
-    double lw_feedback = Ka * lw_angl_err + Krv * lw_rvel_err;
-    double rw_feedback = Ka * rw_angl_err + Krv * rw_rvel_err;
+    lw_ang_sum_err_ += lw_angl_err;
+    rw_ang_sum_err_ += rw_angl_err;
+    const double Ki = 0.01, Kp = 1.5, Kd = 20;
+    double lw_feedback = Ki * lw_ang_sum_err_ + Kp * lw_angl_err + Kd * lw_rvel_err;
+    double rw_feedback = Ki * rw_ang_sum_err_ + Kp * rw_angl_err + Kd * rw_rvel_err;
 
     double lw_feedforward = lw_ref_.rveld_ * 20.;//0;//lw_feedforward_.get(lw_rvel_sp);
     double rw_feedforward = rw_ref_.rveld_ * 20.;//0;//rw_feedforward_.get(rw_rvel_sp);

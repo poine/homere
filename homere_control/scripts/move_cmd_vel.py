@@ -2,7 +2,9 @@
 import time, math, rospy, numpy as np, tf2_ros
 import geometry_msgs.msg
 
-import homere_control.ros_utils as hru
+import pdb
+
+import homere_control.utils as hcu, homere_control.ros_utils as hcru 
 
 class Node:
 
@@ -15,6 +17,7 @@ class Node:
         self.dest = np.array(dest)
         self.T_o2g = np.eye(4)
         self.T_o2g[:3,3] = dest
+        self.psi_sp = -1.14
         
 
     def get_robot_state(self):
@@ -27,21 +30,24 @@ class Node:
             except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 rospy.loginfo_throttle(1., " waiting to get robot odometry pose")
         #print('world to bl {}'.format(odom_to_bl_transf))
-        T_bl2o = hru.T_of_tf_transf(bl2o_transf.transform)
+        T_bl2o = hcru.T_of_tf_transf(bl2o_transf.transform)
         return T_bl2o
         
     def run_ctl(self):
         T_bl2o = self.get_robot_state()
-        pdb.set_trace()
-        T_bl2g = np.dot(self.T_o2g, T_bl2o)
-        t, q = hru.tq_of_T(T_bl2g)
-        print(t)
+        psi, direction, point = hcru.adp_of_T(T_bl2o)
+        err_psi = hcu.wrap_angle(psi - self.psi_sp)
+        Kp = 1
+        self.rvel_sp = -Kp*err_psi 
         
-
+        #pdb.set_trace()
+        #T_bl2g = np.dot(self.T_o2g, T_bl2o)
+        #t, q = hcru.tq_of_T(T_bl2g)
+        #print(t)
         
     def send_command(self):
         self.ctl_in_msg.linear.x = 0.
-        self.ctl_in_msg.angular.z = 0.
+        self.ctl_in_msg.angular.z = self.rvel_sp
         self.ctl_input_pub.publish(self.ctl_in_msg)
         
     def run(self):

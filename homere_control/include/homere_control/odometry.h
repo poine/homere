@@ -70,7 +70,12 @@ namespace homere_controller
     double getLWrvel() const { return left_wheel_est_vel_; }
     double getRWrvel() const { return right_wheel_est_vel_; }
     void reset(double x, double y, double psi);
-      
+
+    /// Wheel kinematic parameters [m]:
+    double wheel_separation_;
+    double left_wheel_radius_;
+    double right_wheel_radius_;
+    
   private:
     typedef bacc::accumulator_set<double, bacc::stats<bacc::tag::rolling_mean> > RollingMeanAcc;
     typedef bacc::tag::rolling_window RollingWindow;
@@ -89,10 +94,7 @@ namespace homere_controller
     double linear_;  //   [m/s]
     double angular_; // [rad/s]
 
-    /// Wheel kinematic parameters [m]:
-    double wheel_separation_;
-    double left_wheel_radius_;
-    double right_wheel_radius_;
+ 
 
     /// Previou wheel position/state [rad]:
     double left_wheel_old_pos_;

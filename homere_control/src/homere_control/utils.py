@@ -22,6 +22,9 @@ class SymSawtooth:
         step = int(math.fmod(t-self.t0, self.dt_stair*(self.n_stair))/self.dt_stair)
         return self.vals[step]
 
+
+def wrap_angle(_a): return ( _a + np.pi) % (2 * np.pi ) - np.pi
+    
 if __name__ == '__main__':
     time = np.arange(6, 18, 0.01)
     sst = SymSawtooth(t0=6)

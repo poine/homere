@@ -7,6 +7,7 @@ mode_direct, mode_vel = 0, 1
 
 class Node:
     def __init__(self, mode, timeout = 0.5):
+        print('starting in {} mode'.format(mode))
         rospy.init_node('teleop_node')
         self.mode, self.timeout = mode, rospy.Duration(timeout)
         self.last_joy = rospy.get_rostime()
