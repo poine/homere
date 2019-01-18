@@ -19,62 +19,27 @@ namespace homere_controller
     Odometry(size_t velocity_rolling_window_size = 10);
     void init(double wheel_separation, double left_wheel_radius, double right_wheel_radius);
     void starting(const ros::Time &time);
+    void starting(const double time);
     bool update(double left_pos, double right_pos, const ros::Time &time);
-
-    void setWheelParams(double wheel_separation, double left_wheel_radius, double right_wheel_radius);
-    /**
-     * \brief heading getter
-     * \return heading [rad]
-     */
-    double getHeading() const
-    {
-        return heading_;
-    }
-
-    /**
-     * \brief x position getter
-     * \return x position [m]
-     */
-    double getX() const
-    {
-        return x_;
-    }
-
-    /**
-     * \brief y position getter
-     * \return y position [m]
-     */
-    double getY() const
-    {
-        return y_;
-    }
-
-    /**
-     * \brief linear velocity getter
-     * \return linear velocity [m/s]
-     */
-    double getLinear() const
-    {
-        return linear_;
-    }
-
-    /**
-     * \brief angular velocity getter
-     * \return angular velocity [rad/s]
-     */
-    double getAngular() const
-    {
-        return angular_;
-    }
-
+    bool update(double left_pos, double right_pos, const double time);
+ 
+    double getHeading() const { return heading_; }
+    double getX() const { return x_; }
+    double getY() const { return y_;  }
+    double getLinear() const { return linear_;}
+    double getAngular() const {return angular_;}
     double getLWrvel() const { return left_wheel_est_vel_; }
     double getRWrvel() const { return right_wheel_est_vel_; }
-    void reset(double x, double y, double psi);
+
+    void setWheelParams(double wheel_separation, double left_wheel_radius, double right_wheel_radius);
+    void reset(double x, double y, double psi, double left_pos, double right_pos);
 
     /// Wheel kinematic parameters [m]:
     double wheel_separation_;
     double left_wheel_radius_;
     double right_wheel_radius_;
+
+    
     
   private:
     typedef bacc::accumulator_set<double, bacc::stats<bacc::tag::rolling_mean> > RollingMeanAcc;

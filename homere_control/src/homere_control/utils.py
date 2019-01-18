@@ -3,10 +3,21 @@
 
 import math, numpy as np
 import matplotlib.pyplot as plt
+import tf.transformations
 
-
-#import homere_control.utils as hut
 import pdb
+
+def T_of_t_q(t, q):
+    T = tf.transformations.quaternion_matrix(q)
+    T[:3,3] = t
+    return T
+
+def tq_of_T(T):
+    return T[:3, 3], tf.transformations.quaternion_from_matrix(T)
+
+def adp_of_T(T):
+    angle, direction, point = tf.transformations.rotation_from_matrix(T)
+    return angle, direction, point
 
 
 class SymSawtooth:

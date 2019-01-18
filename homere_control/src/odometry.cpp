@@ -38,7 +38,18 @@ namespace homere_controller
       timestamp_ = time;
   }
 
- bool Odometry::update(double left_pos, double right_pos, const ros::Time &time)
+  void Odometry::starting(const double time) {
+      // Reset accumulators and timestamp:
+      //resetAccumulators();
+      //timestamp_ = ros::Time(time);
+      starting(ros::Time(time));
+  }
+
+  bool Odometry::update(double left_pos, double right_pos, const double  time) {
+    return update(left_pos, right_pos, ros::Time(time));
+  }
+  
+  bool Odometry::update(double left_pos, double right_pos, const ros::Time &time)
   {
     /// Get current wheel joint positions:
     const double left_wheel_cur_pos  = left_pos  * left_wheel_radius_;
@@ -78,8 +89,11 @@ namespace homere_controller
   }
   
 
-  void Odometry::reset(double x, double y, double psi) {
+  void Odometry::reset(double x, double y, double psi, double left_pos, double right_pos) {
     x_ = x; y_=y; heading_=psi;
+    left_wheel_old_pos_  = left_pos  * left_wheel_radius_;
+    right_wheel_old_pos_ = right_pos * right_wheel_radius_;
+    std::cerr << " reset " << x_ << " " << y_ << std::endl;
   }
   
   void Odometry::setWheelParams(double wheel_separation, double left_wheel_radius, double right_wheel_radius)

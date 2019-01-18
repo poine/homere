@@ -196,7 +196,7 @@ namespace homere_controller {
   // rosservice call /homere/homere_controller/reset_odom 0. 0. 0.
   bool HomereController::OnOdomReset(homere_control::srv_reset_odom::Request  &req, homere_control::srv_reset_odom::Response &res) {
     ROS_INFO_STREAM_NAMED(__NAME, "in HomereController::OnOdomReset");
-    odometry_.reset(req.x0, req.y0, req.psi0);
+    odometry_.reset(req.x0, req.y0, req.psi0, left_wheel_joint_.getPosition(), right_wheel_joint_.getPosition());
     return true;
   }
 
