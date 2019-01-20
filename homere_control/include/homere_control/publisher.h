@@ -9,6 +9,7 @@
 #include <realtime_tools/realtime_publisher.h>
 
 #include <homere_control/homere_controller_debug.h>
+#include <homere_control/debug_io.h>
 #include <homere_control/debug_wheel_ref.h>
 
 #define MAX_SENSOR_LEN 15
@@ -72,6 +73,34 @@ namespace homere_controller {
     int8_t rw_pwm_[MAX_SENSOR_LEN];
   };
 
+
+  //
+  // Publish input/output 
+  //
+  class DebugIOPublisher {
+
+  public:
+    DebugIOPublisher();
+    void init(ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
+    void publish(const double lw_angle, const double rw_angle,
+		 const double lw_rvel, const double rw_rvel,
+		 const int8_t lw_pwm, const int8_t rw_pwm, const ros::Time& now);
+
+  private:
+    boost::shared_ptr<realtime_tools::RealtimePublisher<homere_control::debug_io> > pub_;
+    int nb_data_;
+    ros::Time stamp_[MAX_SENSOR_LEN];
+    double lw_angle_[MAX_SENSOR_LEN];
+    double rw_angle_[MAX_SENSOR_LEN];
+    double lw_rvel_[MAX_SENSOR_LEN];
+    double rw_rvel_[MAX_SENSOR_LEN];
+    int8_t lw_pwm_[MAX_SENSOR_LEN];
+    int8_t rw_pwm_[MAX_SENSOR_LEN];
+  };
+
+
+
+  
 
   //
   // Publish wheel controller reference

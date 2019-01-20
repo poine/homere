@@ -6,7 +6,7 @@ import pdb
 
 import julie_misc.plot_utils as jpu
 import homere_control.utils as hcu
-import odom_dataset as ods, fit_odometry as fod
+import homere_control.io_dataset as hio, fit_odometry as fod
 
 #
 # original C++ implementation
@@ -75,7 +75,7 @@ def run_on_ds(odom, ds, label, start_idx=0, run_len=None):
 def plot2d(odom, odom_pos, odom_yaw, ds, label):
     figsize=(20.48, 10.24)
     margins = 0.05, 0.07, 0.97, 0.95, 0.14, 0.39
-    fig = ods.plot2d(ds)
+    fig = hio.plot2d(ds)
     print('got {} odom'.format(len(odom_pos)))
     plt.plot(odom_pos[:,0], odom_pos[:,1], '.', label=label)
     #plt.gca().legend(True)
@@ -86,14 +86,14 @@ def plot_err(odom_pos, odom_yaw, ds, label, start_idx, run_len, filename):
     fig = jpu.prepare_fig(window_title='Odometry error {} ({})'.format(label, filename), figsize=figsize, margins=margins)
 
     if run_len is None: run_len = len(ds.enc_stamp) - start_idx # we go to the end
-    truth_pos_1 = ods.interpolate(ds.truth_pos, ds.truth_stamp, ds.enc_stamp[start_idx:start_idx+run_len])
+    truth_pos_1 = hio.interpolate(ds.truth_pos, ds.truth_stamp, ds.enc_stamp[start_idx:start_idx+run_len])
     pos_err = odom_pos - truth_pos_1
     ax = plt.subplot(2,1,1)
     plt.plot(ds.enc_stamp[start_idx:start_idx+run_len], np.linalg.norm(pos_err, axis=1))
     jpu. decorate(ax, title='odom translation error', xlab='time in s', ylab='m', legend=None, xlim=None, ylim=None)
 
     truth_yaw = np.array([tf.transformations.euler_from_quaternion(q, axes='sxyz')[2] for q in ds.truth_ori])
-    truth_yaw_1 = ods.interpolate(truth_yaw[:,np.newaxis], ds.truth_stamp, ds.enc_stamp[start_idx:start_idx+run_len])
+    truth_yaw_1 = hio.interpolate(truth_yaw[:,np.newaxis], ds.truth_stamp, ds.enc_stamp[start_idx:start_idx+run_len])
     yaw_err = hcu.wrap_angle(odom_yaw - truth_yaw_1)
     ax = plt.subplot(2,1,2)
     plt.plot(ds.enc_stamp[start_idx:start_idx+run_len], np.rad2deg(yaw_err))
@@ -101,10 +101,11 @@ def plot_err(odom_pos, odom_yaw, ds, label, start_idx, run_len, filename):
       
 if __name__ == '__main__':
 
-    #ds = ods.DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_2.npz', _type='homere')
-    #ds = ods.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
-    filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
-    ds = ods.DataSet(filename, _type)
+    #ds = hio.DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_2.npz', _type='homere')
+    #ds = hio.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
+    #filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
+    filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
+    ds = hio.DataSet(filename, _type)
     reg = fod.Regression(ds)
     reg.fit_wheel_radius()
     reg.fit_wheel_sep()

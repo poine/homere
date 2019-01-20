@@ -74,7 +74,8 @@ namespace homere_controller {
     std::cerr << "ODOM:" << odom_ws << " " << odom_lr << " " << odom_rr << std::endl;
 
     odom_publisher_.init(root_nh, controller_nh);
-    debug_publisher_.init(root_nh, controller_nh);
+    //debug_publisher_.init(root_nh, controller_nh);
+    debug_io_publisher_.init(root_nh, controller_nh);
     wr_debug_publisher_.init(root_nh, controller_nh);
     //raw_odom_publisher_.init(root_nh, controller_nh);
     reset_odom_srv_  = controller_nh.advertiseService("reset_odom",  &HomereController::OnOdomReset,  this);
@@ -143,8 +144,9 @@ namespace homere_controller {
     right_wheel_joint_.setCommand(right_wheel_duty_);
     //    debug_publisher_.publish(lw_rvel_sp_, rw_rvel_sp_, lw_angle, rw_angle, lw_rvel, rw_rvel,
     //			     lw_rvel_f, rw_rvel_f, left_wheel_duty_, right_wheel_duty_, now);
-    debug_publisher_.publish(lw_ref_.rvel_, rw_ref_.rvel_, lw_angle, rw_angle, lw_rvel, rw_rvel,
-			     lw_rvel_f, rw_rvel_f, left_wheel_duty_, right_wheel_duty_, now);
+    //debug_publisher_.publish(lw_ref_.rvel_, rw_ref_.rvel_, lw_angle, rw_angle, lw_rvel, rw_rvel,
+    //			     lw_rvel_f, rw_rvel_f, left_wheel_duty_, right_wheel_duty_, now);
+    debug_io_publisher_.publish(lw_angle, rw_angle, lw_rvel, rw_rvel, left_wheel_duty_, right_wheel_duty_, now);
     wr_debug_publisher_.publish(lw_rvel_sp_, rw_rvel_sp_,
 				lw_ref_.angle_, rw_ref_.angle_,
 				lw_ref_.rvel_, rw_ref_.rvel_,
@@ -170,18 +172,18 @@ namespace homere_controller {
     double rw_rvel_err = rw_ref_.rvel_ - rw_rvel; //rw_rvel_sp - rw_rvel;
 
     // fine
-    //double lw_feedback = rc_filter_march(&left_wheel_pid_, lw_rvel_err);
-    //double rw_feedback = rc_filter_march(&right_wheel_pid_, rw_rvel_err);
 
-
-    
+#ifdef RCPID
+    double lw_feedback = rc_filter_march(&left_wheel_pid_, lw_rvel_err);
+    double rw_feedback = rc_filter_march(&right_wheel_pid_, rw_rvel_err);
+#else    
     //
     lw_ang_sum_err_ += lw_angl_err;
     rw_ang_sum_err_ += rw_angl_err;
-    const double Ki = 0.01, Kp = 1.5, Kd = 20;
+    const double Ki = 0.0, Kp = 1.5, Kd = 20;
     double lw_feedback = Ki * lw_ang_sum_err_ + Kp * lw_angl_err + Kd * lw_rvel_err;
     double rw_feedback = Ki * rw_ang_sum_err_ + Kp * rw_angl_err + Kd * rw_rvel_err;
-
+#endif
     double lw_feedforward = lw_ref_.rveld_ * 20.;//0;//lw_feedforward_.get(lw_rvel_sp);
     double rw_feedforward = rw_ref_.rveld_ * 20.;//0;//rw_feedforward_.get(rw_rvel_sp);
 

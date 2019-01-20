@@ -55,7 +55,9 @@ add_message_files(
   FILES
   homere_controller_input.msg
   homere_controller_debug.msg
+  debug_io.msg
   debug_wheel_ref.msg
+  debug_move_controller.msg
 )
 
 ## Generate services in the 'srv' folder

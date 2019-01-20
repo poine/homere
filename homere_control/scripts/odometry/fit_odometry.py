@@ -6,15 +6,18 @@ import sklearn.linear_model
 import pdb
 
 import julie_misc.plot_utils as jpu
-import odom_dataset as ods
+#import odom_dataset as ods
+import homere_control.io_dataset as hio
+#odom_dataset as ods
 
 class Regression:
 
     def __init__(self, ds):
         self.ds = ds
         # interpolate truth at same timestamps as encoders
-        self.truth_lvel_body_1 = ods.interpolate(ds.truth_lvel_body, ds.truth_vel_stamp, ds.enc_vel_stamp)
-        self.truth_rvel_1 = ods.interpolate(ds.truth_rvel, ds.truth_vel_stamp, ds.enc_vel_stamp)
+        self.truth_lvel_body_1 = hio.interpolate(ds.truth_lvel_body, ds.truth_vel_stamp, ds.enc_vel_stamp)
+        self.truth_rvel_1 = hio.interpolate(ds.truth_rvel, ds.truth_vel_stamp, ds.enc_vel_stamp)
+        self.report_fmt = '  * simple: {:.4f} m std {:.2e} mu {:.2e}\n  * ransac: {:.4f} m std {:.2e} mu {:.2e}'
         
     def fit_wheel_radius(self):
         # fit wheel radius using encoder avg rvel and truth vel
@@ -36,14 +39,18 @@ class Regression:
         self.res_radius_ransac_sigma =  np.std(self.res_radius_ransac[self.ransac_wr.inlier_mask_])
         self.res_radius_ransac_mu =  np.mean(self.res_radius_ransac[self.ransac_wr.inlier_mask_])
 
-        fmt = 'wheel radius:\n simple: {} m std {:e} mu {:e}\n ransac: {} m std {:e} mu {:e}'
-        print(fmt.format(self.wheel_radius_simple,
-                         self.res_radius_simple_sigma, self.res_radius_simple_mu,
-                         self.wheel_radius_ransac,
-                         self.res_radius_ransac_sigma, self.res_radius_ransac_mu ))
-
+        print('wheel radius:\n' + self.report_fit_wheel_radius())
         self.wheel_radius = self.wheel_radius_ransac
-    
+
+    def report_fit_wheel_radius(self):
+        return self.report_fmt.format(self.wheel_radius_simple[0],
+                                      self.res_radius_simple_sigma, self.res_radius_simple_mu,
+                                      self.wheel_radius_ransac[0],
+                                      self.res_radius_ransac_sigma, self.res_radius_ransac_mu )
+        
+
+
+        
     def fit_wheel_sep(self):
         # fit wheel_sep using encoder diff rvel and truth rvel
         # psi_d = enc_diff * wr / ws
@@ -65,21 +72,23 @@ class Regression:
         self.res_wheel_sep_ransac_sigma =  np.std(self.res_wheel_sep_ransac[self.ransac_ws.inlier_mask_])
         self.res_wheel_sep_ransac_mu =  np.mean(self.res_wheel_sep_ransac[self.ransac_ws.inlier_mask_])
         
-        fmt = 'wheel sep:\n simple: {} m std {:e} mu {:e}\n ransac: {} m std {:e} mu {:e}'
-        print(fmt.format(self.wheel_sep_simple,
-                         self.res_wheel_sep_simple_sigma, self.res_wheel_sep_simple_mu,
-                         self.wheel_sep_ransac,
-                         self.res_wheel_sep_ransac_sigma, self.res_wheel_sep_ransac_mu,))
+        print('wheel sep:\n'+self.report_fit_wheel_sep())
 
         self.wheel_sep = self.wheel_sep_ransac
 
 
+    def report_fit_wheel_sep(self):
+        return self.report_fmt.format(self.wheel_sep_simple[0],
+                                      self.res_wheel_sep_simple_sigma, self.res_wheel_sep_simple_mu,
+                                      self.wheel_sep_ransac[0],
+                                      self.res_wheel_sep_ransac_sigma, self.res_wheel_sep_ransac_mu)
+        
 
     
-    def plot_residuals(self, filename):
+    def plot_residuals(self, info, filename=None):
         figsize=(20.48, 10.24)
         margins = 0.05, 0.07, 0.97, 0.95, 0.14, 0.39
-        fig = jpu.prepare_fig(window_title='Odometry parameters regression ({})'.format(filename), figsize=figsize, margins=margins)
+        fig = jpu.prepare_fig(window_title='Odometry parameters regression ({})'.format(info), figsize=figsize, margins=margins)
 
         inlier_mask = self.ransac_wr.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
@@ -113,8 +122,9 @@ class Regression:
         ax = plt.subplot(4,2,8)
         plt.hist(self.res_wheel_sep_ransac[self.ransac_ws.inlier_mask_], normed=True, bins=30)
         jpu. decorate(ax, title='ransac', legend=[_fmt_legend.format(self.res_wheel_sep_ransac_mu, self.res_wheel_sep_ransac_sigma)])
+        jpu.savefig(filename)
 
-    def plot_wheel_radius(self):
+    def plot_wheel_radius(self, filename=None):
         fig = jpu.prepare_fig(window_title='Wheel radius regression')
         inlier_mask = self.ransac_wr.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
@@ -127,8 +137,10 @@ class Regression:
         plt.plot(test_enc_vel_sum, test_vel_simple, label='simple')
         plt.plot(test_enc_vel_sum, test_vel_ransac, label='ransac')
         jpu.decorate(plt.gca(), title='wheel radius fit', xlab='enc_avg (rad/s)', ylab="v (m/s)", legend=True)#, xlim=[-1, 20], ylim=[-0.1, 1.])
+        jpu.savefig(filename)
 
-    def plot_wheel_sep(self):
+        
+    def plot_wheel_sep(self, filename=None):
         fig = jpu.prepare_fig(window_title='Wheel sep regression')
         inlier_mask = self.ransac_ws.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
@@ -141,19 +153,22 @@ class Regression:
         plt.plot(test_enc_vel_dif, test_rvel_simple, label='simple')
         plt.plot(test_enc_vel_dif, test_rvel_ransac, label='ransac')
         jpu.decorate(plt.gca(), title='wheel separation fit', xlab='enc_diff (rad/s)', ylab="rvel (rad/s)", legend=True, xlim=[-5., 5.], ylim=[-2.5, 2.5])
+        jpu.savefig(filename)
     
         
         
 if __name__ == '__main__':
-    #_ds = ods.DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_1.npz', _type='homere')
-    #_ds = ods.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
-    filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
-    _ds = ods.DataSet(filename, type)
+    #_ds = hio.DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_1.npz', _type='homere')
+    #_ds = hio.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
+    #filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
+    #filename, _type = '/home/poine/work/homere/homere_control/data/odometry/julie/gazebo_2.npz', 'homere'
+    filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
+    _ds = hio.DataSet(filename, type)
     reg = Regression(_ds)
-    #ods.plot_interp(_ds.truth_lvel_body, _ds.truth_stamp, reg.truth_lvel_body_1, _ds.enc_vel_stamp)
+    #hio.plot_interp(_ds.truth_lvel_body, _ds.truth_stamp, reg.truth_lvel_body_1, _ds.enc_vel_stamp)
     reg.fit_wheel_radius()
     reg.fit_wheel_sep()
-    reg.plot_residuals(filename)
+    reg.plot_residuals(info=filename)
     reg.plot_wheel_radius()
     reg.plot_wheel_sep()
     plt.show()

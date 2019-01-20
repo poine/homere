@@ -3,9 +3,9 @@ homere:
     type: joint_state_controller/JointStateController
     publish_rate: 50
 
-  homere_imu_controller:
-    type: imu_sensor_controller/ImuSensorController
-    publish_rate: 25
+#  homere_imu_controller:
+#    type: imu_sensor_controller/ImuSensorController
+#    publish_rate: 25
 
   homere_controller:
     type: homere_control/HomereController

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#-*- coding: utf-8 -*-
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,6 +15,9 @@ class DataSet:
         print('## loading {}'.format(filename))
         self.data =  np.load(filename)
         self.enc_lw, self.enc_rw = self.data['encoders_lw'], self.data['encoders_rw']
+        try:
+            self.lw_pwm, self.rw_pwm = self.data['pwm_lw'], self.data['pwm_rw']
+        except KeyError: pass
         self.enc_stamp = self.data['encoders_stamp']
 
         if _type == 'oscar':
@@ -25,6 +29,8 @@ class DataSet:
             self.truth_stamp = self.data['truth_stamp']
             self.truth_lvel, self.truth_rvel = self.data['truth_lvel'], self.data['truth_rvel']
             self.truth_vel_stamp = self.truth_stamp
+        print('##  found {} debug_io and {} truth'.format(len(self.enc_stamp), len(self.truth_stamp)))
+        print('##  spaning {:.1f} s'.format(self.enc_stamp[-1]-self.enc_stamp[0]))
         self.compute_enc_vel()
         self.compute_truth_lvel()
 
@@ -80,12 +86,12 @@ def plot_interp(_d, _stamps, _d_1, _stamps_1):
     jpu. decorate(plt.gca(), title='Interp', xlab='time in s', ylab='', legend=True, xlim=None, ylim=None)
 
 
-def plot_encoders(_ds):
+def plot_encoders(_ds, filename=None):
     fig = jpu.prepare_fig(window_title='Encoders')
     ax = plt.subplot(4,1,1)
-    plt.plot(_ds.enc_stamp, _ds.enc_lw, '.')
-    plt.plot(_ds.enc_stamp, _ds.enc_rw, '.')   
-    jpu. decorate(ax, title='Encoders position', xlab='time in s', ylab='rad', legend=None, xlim=None, ylim=None)
+    plt.plot(_ds.enc_stamp, _ds.enc_lw, '.', label="lw")
+    plt.plot(_ds.enc_stamp, _ds.enc_rw, '.', label="rw")   
+    jpu. decorate(ax, title='Encoders position', xlab='time in s', ylab='rad', legend=True)
     ax = plt.subplot(4,1,2)
     plt.plot(_ds.enc_vel_stamp, _ds.enc_vel_lw, '.')
     plt.plot(_ds.enc_vel_stamp, _ds.enc_vel_rw, '.')   
@@ -96,9 +102,18 @@ def plot_encoders(_ds):
     ax = plt.subplot(4,1,4)
     plt.plot(_ds.enc_vel_stamp, _ds.enc_vel_dif, '.')
     jpu. decorate(ax, title='Encoders velocity dif', xlab='time in s', ylab='rad/s', legend=None, xlim=None, ylim=None)
-     
+    jpu.savefig(filename)
 
-def plot_truth(_ds):
+def plot_pwm(_ds, filename=None):
+    figsize=(20.48, 2.56)
+    fig = jpu.prepare_fig(window_title='PWM', figsize=figsize)
+    ax = plt.subplot(1,1,1)
+    plt.plot(_ds.enc_stamp, _ds.lw_pwm, '.', label="lw")
+    plt.plot(_ds.enc_stamp, _ds.rw_pwm, '.', label="rw")
+    jpu. decorate(ax, title='PWM', xlab='time in s', ylab='', legend=True)
+    
+    
+def plot_truth_vel(_ds, filename=None):
     fig = jpu.prepare_fig(window_title='Truth')
     ax = plt.subplot(2,1,1)
     #plt.plot(_ds.truth_stamp, _ds.truth_norm_vel, '.')
@@ -111,27 +126,32 @@ def plot_truth(_ds):
     plt.plot(_ds.truth_vel_stamp, _ds.truth_rvel[:,1], '.', label='q')
     plt.plot(_ds.truth_vel_stamp, _ds.truth_rvel[:,2], '.', label='r')
     jpu. decorate(ax, title='Truth rotational velocity', xlab='time in s', ylab='rad/s', legend=True, xlim=None, ylim=[-2, 2])
+    jpu.savefig(filename)
     
     
-    
-def plot2d(_ds):
+def plot2d(_ds, filename=None):
     fig = jpu.prepare_fig(window_title='2D')
     plt.plot(_ds.truth_pos[:,0], _ds.truth_pos[:,1], '.', label='truth')
     jpu. decorate(plt.gca(), title='truth 2D points', xlab='m', ylab='m', legend=True, xlim=None, ylim=None)
     plt.axis('equal')
-
+    jpu.savefig(filename)
     return fig
 
+def plot_all(ds):
+    plot_encoders(ds)
+    plot_pwm(ds)
+    plot2d(ds)
+    plot_truth_vel(ds)
         
-
-
-
 if __name__ == '__main__':
     #_ds = DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_2.npz', _type='homere')
     #_ds = DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
-    _ds = DataSet('/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', _type='homere')
-
+    #_ds = DataSet('/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', _type='homere')
+    #filename, _type = '/home/poine/work/homere/homere_control/data/odometry/julie/gazebo_5.npz', 'homere'
+    filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_10.npz', 'homere'
+    _ds = DataSet(filename, _type)
     #plot_encoders(_ds)
     #plot2d(_ds)
-    plot_truth(_ds)
+    #plot_truth_vel(_ds)
+    plot_all(_ds)
     plt.show()

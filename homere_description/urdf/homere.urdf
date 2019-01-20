@@ -25,7 +25,7 @@
   <xacro:property name="wheel_axle_joint_eff_limit"  value="204.95"/>
   <xacro:property name="wheel_axle_joint_vel_limit"  value="39.02"/>
   <xacro:property name="wheel_axle_joint_damping"    value="0.1" />
-  <xacro:property name="wheel_axle_joint_friction"   value="0.1" />
+  <xacro:property name="wheel_axle_joint_friction"   value="0.01" />
 
   <!-- caster wheels -->
   <xacro:property name="caster_ax1_l"     value="0.1"  /> <!-- size and location !-->
@@ -33,9 +33,13 @@
   <xacro:property name="caster_ax1_dx"    value="0.5"  /> <!-- wrt base_link     !-->
   <xacro:property name="caster_ax1_dy"    value="0.25" />
   <xacro:property name="caster_ax1_dz"    value="0.075" />
+  <xacro:property name="caster_ax1_joint_damping"    value="0.1" />
+  <xacro:property name="caster_ax1_joint_friction"   value="0.01" />
   <xacro:property name="caster_ax2_l"     value="0.1"  /> <!-- size and location  !-->
   <xacro:property name="caster_ax2_r"     value="0.025"/> <!-- of horizontal axle !-->
   <xacro:property name="caster_ax2_loc"   value="-0.05 0 -0.15"/> <!-- wrt vert axle      !-->
+  <xacro:property name="caster_ax2_joint_damping"    value="0.1" />
+  <xacro:property name="caster_ax2_joint_friction"   value="0.01" />
   <xacro:property name="caster_wheel_r"   value="0.12" /> <!-- Wheel diameter and hub diameter-->
   <xacro:property name="caster_wheel_r1"  value="0.05" /> 
   <xacro:property name="caster_wheel_l"   value="0.08" /> <!-- wheel thickness --> 
@@ -165,6 +169,8 @@
       <parent link="base_link"/>
       <child link="${lr_prefix}_caster_ax1_carrier_link"/>
       <origin xyz="${caster_ax1_dx} ${lr_reflect * caster_ax1_dy} ${caster_ax1_dz}"/>
+      <!--<limit effort="${caster_ax1_joint_eff_limit}" velocity="${caster_ax1_joint_vel_limit}"/>-->
+      <dynamic damping="${caster_ax1_joint_damping}" friction="{caster_ax1_joint_friction}"/>
     </joint>
 
     <!-- Horizontal axle -->
@@ -181,6 +187,8 @@
       <child link="${lr_prefix}_caster_ax2_link"/>
       <origin xyz="0 0 0"/>
       <axis xyz="0 0 1"/>
+      <!--<limit effort="${caster_ax2_joint_eff_limit}" velocity="${caster_ax2_joint_vel_limit}"/>-->
+      <dynamic damping="${caster_ax2_joint_damping}" friction="{caster_ax2_joint_friction}"/>
     </joint>
 
     <transmission name="${lr_prefix}_caster_ax1_to_ax2_trans">
@@ -242,7 +250,7 @@
 
   <!-- IMU -->
   <link name="imu_link">
-    <visual><geometry><box size="0.1 0.1 0.1"/></geometry></visual>
+    <visual><geometry><sphere radius="0.025"/></geometry></visual>
   </link>
   <joint name="imu_joint" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />

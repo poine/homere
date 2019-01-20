@@ -43,6 +43,7 @@ namespace homere_controller {
       homere_controller::Odometry       odometry_;
       homere_controller::OdomPublisher  odom_publisher_;
       homere_controller::DebugPublisher debug_publisher_;
+      homere_controller::DebugIOPublisher debug_io_publisher_;
       homere_controller::WRDebugPublisher wr_debug_publisher_;
       
       ros::ServiceServer reset_odom_srv_;

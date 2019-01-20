@@ -49,3 +49,7 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+#
+/homere_control/scripts/odometry/cpp_homere_control.so
+/homere_control/scripts/odometry/homere_control.cpp

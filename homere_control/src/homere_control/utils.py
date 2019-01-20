@@ -7,6 +7,10 @@ import tf.transformations
 
 import pdb
 
+
+#
+#
+#
 def T_of_t_q(t, q):
     T = tf.transformations.quaternion_matrix(q)
     T[:3,3] = t
@@ -19,7 +23,17 @@ def adp_of_T(T):
     angle, direction, point = tf.transformations.rotation_from_matrix(T)
     return angle, direction, point
 
+#
+#
+#
+def kin_vel_of_wheel_vel(lw_rvel, rw_rvel, w_r, w_s):
+    lvel = (rw_rvel + lw_rvel) * 0.5 * w_r
+    rvel = (rw_rvel - lw_rvel) * w_r / w_s
+    return lvel, rvel
 
+#
+#
+#
 class SymSawtooth:
     def __init__(self, n_stair=20, dt_stair=0.5, _min=-20, _max=20, t0=0):
         self.vals = np.concatenate((np.linspace(_min, _max, n_stair/2), np.linspace(_max, _min, n_stair/2)))

@@ -3,7 +3,7 @@ import time, math, rospy, numpy as np, tf2_ros, geometry_msgs.msg, nav_msgs.msg
 import pdb
 
 #import homere_control.srv
-import homere_control.ros_utils as hru
+import homere_control.ros_utils as hru, homere_control.utils as hcu
 
 class Node:
     def __init__(self):
@@ -11,12 +11,13 @@ class Node:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         self.broadcaster = tf2_ros.StaticTransformBroadcaster()
         self.tf_msg = geometry_msgs.msg.TransformStamped()
-        self.tf_msg.header.frame_id = "world"
+        self.tf_msg.header.frame_id = rospy.get_param('~ref_frame', "world")
         self.tf_msg.child_frame_id = "odom"
+        self.robot_truth_topic = rospy.get_param('~robot_truth_topic', "/homere/base_link_truth")
 
     def fetch_thruth(self):
         #print('fetching base_link to _world truth')
-        _msg = rospy.wait_for_message('/homere/base_link_truth', nav_msgs.msg.Odometry)
+        _msg = rospy.wait_for_message(self.robot_truth_topic, nav_msgs.msg.Odometry)
         #print('got {}'.format(_msg))
         T_bl2w = hru.T_of_nav_odom(_msg)
         #print('got T_bl2w\n{}'.format(T_bl2w))
@@ -52,8 +53,8 @@ class Node:
     def compute_drift(self, T_o2w):
         T_w2o1 = self.compute_T_w2o()
         T_o2o1 = np.dot(T_w2o1, T_o2w)
-        t, q = hru.tq_of_T(T_o2o1)
-        a,d,p = hru.adp_of_T(T_o2o1)
+        t, q = hcu.tq_of_T(T_o2o1)
+        a,d,p = hcu.adp_of_T(T_o2o1)
         print('err angle {:.1f} deg dist {:.2f} m'.format(np.rad2deg(a), np.linalg.norm(t)))
         #pdb.set_trace()
         #print(np.linalg.norm(t))
