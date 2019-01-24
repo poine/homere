@@ -76,7 +76,7 @@ def run_twist():
 
     duration = rospy.get_param('~duration', 60)
     signal_type = rospy.get_param('~signal_type', "step_lin")
-    print('Sending {} for {:.1f} s'.format(signal_type, duration))
+    rospy.loginfo('Sending {} for {:.1f} s'.format(signal_type, duration))
     ctl_ins = {'step_lin': lambda: TwistLinStep(a0=-0.1, a1=0.1, dt=60.),
                'step_ang': lambda: TwistAngStep( a0=-0.7, a1=0.7, dt=40.),
                'sine_lin': lambda: TwistLinSine(a=1., om=0.25),

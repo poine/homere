@@ -10,6 +10,12 @@ import lvel_io_utils as lvu
 
 import pdb
 
+
+'''
+Plant identification with Keras
+Linear velocity using io presentation
+'''
+
 class LvelIoAnn:
     delay = 2
     v_km1, v_km2, u_km1, u_km2, input_size = range(5) # lv_km1, lv_km2, pwm_s_km1, pwm_s_km2
@@ -30,7 +36,7 @@ class LvelIoAnn:
         return _ann_in, _ann_out
         
     
-    def train(self, _ds, force_retrain=False, plant_ann_filename='/tmp/lvel_io_plant_ann.h5', epochs=100):
+    def train(self, _ds, force_retrain=False, plant_ann_filename='/home/poine/work/homere/homere_control/data/lvel_io_plant_ann.h5', epochs=100):
 
         if force_retrain or not os.path.isfile(plant_ann_filename): 
         
@@ -44,8 +50,8 @@ class LvelIoAnn:
 
             # build delayed time series
             _ann_in, _ann_out = self.prepare_dataset(_ds)
-            
-            self.plant_ann.fit(_ann_in, _ann_out, epochs=epochs, batch_size=32,  verbose=1, shuffle=True)
+            # Fit the network
+            self.history = self.plant_ann.fit(_ann_in, _ann_out, epochs=epochs, batch_size=32,  verbose=1, shuffle=True, validation_split=0.1)
             # Save it to avoid retraining
             self.plant_ann.save(plant_ann_filename)
         else:
@@ -85,7 +91,7 @@ if __name__ == "__main__":
         _ds_train = hio.DataSet(_fn, _t)
     else:
         _ds_train = None
-    plant_ann.train(_ds_train, force_retrain=force_retrain, epochs=100)
+    plant_ann.train(_ds_train, force_retrain=force_retrain, epochs=300, plant_ann_filename='/home/poine/work/homere/homere_control/data/lvel_io_plant_ann2.h5')
 
     if 0:
         _fn, _t = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_17_sine_pwm_sum.npz', 'homere'
@@ -93,11 +99,11 @@ if __name__ == "__main__":
         X, U, Xpred = test_plant(plant_ann, _ds_test)
         lvu.plot_test(plt.subplot(1,2,2), plt.subplot(1,2,1), _ds_test.enc_vel_stamp, X, U, Xpred)
     else:
-        if 0:
+        if 1:
             make_many_test(plant_ann, '/home/poine/work/homere/homere_control/data/homere/gazebo/',
                            ['homere_io_16_step_pwm_10_sum.npz', 'homere_io_16_step_pwm_20_sum.npz',
                             'homere_io_16_step_pwm_30_sum.npz', 'homere_io_16_step_pwm_40_sum.npz'])
-        if 1:
+        if 0:
             make_many_test(plant_ann, '/home/poine/work/homere/homere_control/data/homere/gazebo/',
                            ['homere_io_17_sine_pwm_sum.npz', 'homere_io_17_sine_pwm_15_sum.npz',
                             'homere_io_17_sine_pwm_30_sum.npz', 'homere_io_17_sine_pwm_40_sum.npz'])
