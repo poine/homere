@@ -4,7 +4,7 @@
   <xacro:include filename="$(find homere_description)/urdf/homere.urdf" />
   
   <!-- make it colorfull -->
-  <gazebo reference="chassis_link"><material>Gazebo/Green</material></gazebo>
+  <gazebo reference="chassis_link"><material>Gazebo/GreenTransparent</material></gazebo>
   <gazebo reference="left_rear_axle_carrier_link"><material>Gazebo/Red</material></gazebo>
   <gazebo reference="right_rear_axle_carrier_link"><material>Gazebo/Red</material></gazebo>
   <gazebo reference="left_rear_wheel_link"><material>Gazebo/Grey</material></gazebo>

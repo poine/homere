@@ -29,14 +29,14 @@
 
   <!-- caster wheels -->
   <xacro:property name="caster_ax1_l"     value="0.1"  /> <!-- size and location !-->
-  <xacro:property name="caster_ax1_r"     value="0.025"/> <!-- of vertical axle  !-->
+  <xacro:property name="caster_ax1_r"     value="0.01"/> <!-- of vertical axle  !-->
   <xacro:property name="caster_ax1_dx"    value="0.5"  /> <!-- wrt base_link     !-->
   <xacro:property name="caster_ax1_dy"    value="0.25" />
   <xacro:property name="caster_ax1_dz"    value="0.075" />
   <xacro:property name="caster_ax1_joint_damping"    value="0.1" />
   <xacro:property name="caster_ax1_joint_friction"   value="0.01" />
-  <xacro:property name="caster_ax2_l"     value="0.1"  /> <!-- size and location  !-->
-  <xacro:property name="caster_ax2_r"     value="0.025"/> <!-- of horizontal axle !-->
+  <xacro:property name="caster_ax2_l"     value="0.08"/> <!-- size and location  !-->
+  <xacro:property name="caster_ax2_r"     value="0.01"/> <!-- of horizontal axle !-->
   <xacro:property name="caster_ax2_loc"   value="-0.05 0 -0.15"/> <!-- wrt vert axle      !-->
   <xacro:property name="caster_ax2_joint_damping"    value="0.1" />
   <xacro:property name="caster_ax2_joint_friction"   value="0.01" />
@@ -44,6 +44,10 @@
   <xacro:property name="caster_wheel_r1"  value="0.05" /> 
   <xacro:property name="caster_wheel_l"   value="0.08" /> <!-- wheel thickness --> 
   <xacro:property name="caster_wheel_m"   value="0.5"  /> <!-- wheel mass      -->
+
+  <xacro:property name="hq_visual"     value="false" />
+  <xacro:property name="hq_wheel"     value="true" />
+  <xacro:property name="hq_cwheel"     value="true" />
   
  <!-- Degree-to-radian conversions -->
   <xacro:property name="degrees_45"  value="${pi/4.}"/>
@@ -90,9 +94,9 @@
     <!-- Axle -->
     <link name="${lr_prefix}_rear_axle_carrier_link">
       <visual>
-        <origin xyz="0 0 0" rpy="${degrees_90} 0 0"/>
-        <geometry><cylinder radius="0.02" length="${wheel_f}"/></geometry>
-        <material name="transp_green"/>
+     	  <origin xyz="0 0 0" rpy="${degrees_90} 0 0"/>
+          <geometry><cylinder radius="0.02" length="${wheel_f}"/></geometry>
+          <material name="transp_green"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="${degrees_90} 0 0"/>
@@ -111,9 +115,15 @@
     <xacro:property name="_wheel_xyz_origin" value="0 0 ${lr_reflect * (wheel_f/2 + wheel_l / 2)}" scope="local"/>
     <link name="${lr_prefix}_rear_wheel_link">
       <visual>
-	<origin xyz="${_wheel_xyz_origin}"/>
-        <geometry><cylinder radius="${wheel_r}" length="${wheel_l}"/></geometry>
-        <material name="tire_material"/>
+	<xacro:if value="${hq_wheel}">
+     	  <origin xyz="${_wheel_xyz_origin}" rpy="0 0 0"/>
+          <geometry><mesh filename="package://homere_description/meshes/${lr_prefix}_wheel.dae"/></geometry>
+        </xacro:if>
+	<xacro:unless value="${hq_wheel}">
+	  <origin xyz="${_wheel_xyz_origin}"/>
+          <geometry><cylinder radius="${wheel_r}" length="${wheel_l}"/></geometry>
+          <material name="tire_material"/>
+	</xacro:unless>
       </visual>
       <collision>
         <origin xyz="${_wheel_xyz_origin}"/>
@@ -154,9 +164,14 @@
     <!-- Vertical axle -->
     <link name="${lr_prefix}_caster_ax1_carrier_link">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 ${degrees_90}"/>
+        <xacro:if value="${hq_visual}">
+          <geometry><mesh filename="package://homere_description/meshes/caster.dae"/></geometry>
+        </xacro:if>
+	<xacro:unless value="${hq_visual}">
+	<origin xyz="0 0 0" rpy="0 0 ${degrees_90}"/>
         <geometry><cylinder radius="${caster_ax1_r}" length="${caster_ax1_l}"/></geometry>
         <material name="transp_green"/>
+	</xacro:unless>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 ${degrees_90}"/>
@@ -206,9 +221,15 @@
     <!-- Wheel -->
     <link name="${lr_prefix}_caster_wheel_link">
       <visual>
-	<origin xyz="0 0 0"/>
-        <geometry><cylinder radius="${caster_wheel_r}" length="${caster_wheel_l}"/></geometry>
-        <material name="tire_material"/>
+	<xacro:if value="${hq_cwheel}">
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+	  <geometry><mesh filename="package://homere_description/meshes/${lr_prefix}_cwheel.dae"/></geometry>
+        </xacro:if>
+	<xacro:unless value="${hq_cwheel}">
+	  <origin xyz="0 0 0"/>
+          <geometry><cylinder radius="${caster_wheel_r}" length="${caster_wheel_l}"/></geometry>
+          <material name="tire_material"/>
+	</xacro:unless>
       </visual>
       <collision>
 	<origin xyz="0 0 0"/>

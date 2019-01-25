@@ -36,30 +36,36 @@ class LvelIoAnn:
         return _ann_in, _ann_out
         
     
-    def train(self, _ds, force_retrain=False, plant_ann_filename='/home/poine/work/homere/homere_control/data/lvel_io_plant_ann.h5', epochs=100):
+    def train(self, _ds, epochs, plant_ann_filename):
 
-        if force_retrain or not os.path.isfile(plant_ann_filename): 
-        
-            # Build the plant identification ANN
-            plant_i = keras.layers.Input((4,), name ="plant_i") #v_k, v_km1, u_k, u_km1
-            plant_l = keras.layers.Dense(1, activation='linear', kernel_initializer='uniform',
-                                         input_shape=(4,), use_bias=True, name="plant")
-            plant_o = plant_l(plant_i)
-            self.plant_ann = keras.models.Model(inputs=plant_i, outputs=plant_o)
-            self.plant_ann.compile(loss='mean_squared_error', optimizer='adam')
+        # Build the plant identification ANN
+        plant_i = keras.layers.Input((4,), name ="plant_i") #v_k, v_km1, u_k, u_km1
+        plant_l = keras.layers.Dense(1, activation='linear', kernel_initializer='uniform',
+                                     input_shape=(4,), use_bias=True, name="plant")
+        plant_o = plant_l(plant_i)
+        self.plant_ann = keras.models.Model(inputs=plant_i, outputs=plant_o)
+        opt = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=True)
+        self.plant_ann.compile(loss='mean_squared_error', optimizer=opt)
 
-            # build delayed time series
-            _ann_in, _ann_out = self.prepare_dataset(_ds)
-            # Fit the network
-            self.history = self.plant_ann.fit(_ann_in, _ann_out, epochs=epochs, batch_size=32,  verbose=1, shuffle=True, validation_split=0.1)
-            # Save it to avoid retraining
-            self.plant_ann.save(plant_ann_filename)
-        else:
-            # load a previously trained ANN
-            self.plant_ann = keras.models.load_model(plant_ann_filename)
+        # build delayed time series
+        _ann_in, _ann_out = self.prepare_dataset(_ds)
+        # Fit the network
+        callbacks = [keras.callbacks.EarlyStopping(monitor='val_loss', patience=10),
+                     keras.callbacks.ModelCheckpoint(filepath='lvel_id_best_model.h5', monitor='val_loss', save_best_only=True)]
+        self.history = self.plant_ann.fit(_ann_in, _ann_out, epochs=epochs, batch_size=64,  verbose=1,
+                                          shuffle=True, validation_split=0.1, callbacks=callbacks)
+        # Save it to avoid retraining
+        self.plant_ann.save(plant_ann_filename)
+
+
+    def load(self, plant_ann_filename):
+        # load a previously trained ANN
+        self.plant_ann = keras.models.load_model(plant_ann_filename)
 
     def predict(self, vkm1, vkm2, ukm1, ukm2):
         return self.plant_ann.predict(np.array([[vkm1, vkm2, ukm1, ukm2]]))
+
+
 
 def test_plant(plant_ann, ds):
     wr, ws = 0.2, 0.75
@@ -76,23 +82,28 @@ def test_plant(plant_ann, ds):
     
 def make_many_test(ann, _dir, _fns):
     _t = 'homere'
+    fig = jpu.prepare_fig(window_title='Test Plant Prediction')
     nr, nc = 4,2
     for i, _fn in enumerate(_fns):
         ds = hio.DataSet(_dir+_fn, _t)
         X, U, Xpred = test_plant(ann, ds)
         lvu.plot_test(plt.subplot(nr,nc,nc*i+2), plt.subplot(nr,nc,nc*i+1), ds.enc_vel_stamp, X, U, Xpred)
     
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO) 
-    force_retrain = False
+def main(train_plant=True): 
     plant_ann = LvelIoAnn()
-    if force_retrain:
-        _fn, _t = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_11_random_lrvel.npz', 'homere'
+    plant_ann_filename='/home/poine/work/homere/homere_control/data/lvel_io_plant_ann2.h5'
+    if train_plant or not os.path.isfile(plant_ann_filename):
+        _fn, _t = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_11_random_lvel.npz', 'homere'
+        #_fn, _t = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_10.npz', 'homere'
         _ds_train = hio.DataSet(_fn, _t)
+        hio.plot_truth_vel(_ds_train)
+        plant_ann.train(_ds_train, epochs=600, plant_ann_filename=plant_ann_filename)
+        hcu.plot_training(plant_ann)
+        plt.show()
     else:
-        _ds_train = None
-    plant_ann.train(_ds_train, force_retrain=force_retrain, epochs=300, plant_ann_filename='/home/poine/work/homere/homere_control/data/lvel_io_plant_ann2.h5')
+        plant_ann.load(plant_ann_filename)
 
+        
     if 0:
         _fn, _t = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_17_sine_pwm_sum.npz', 'homere'
         _ds_test = hio.DataSet(_fn, _t)
@@ -103,8 +114,13 @@ if __name__ == "__main__":
             make_many_test(plant_ann, '/home/poine/work/homere/homere_control/data/homere/gazebo/',
                            ['homere_io_16_step_pwm_10_sum.npz', 'homere_io_16_step_pwm_20_sum.npz',
                             'homere_io_16_step_pwm_30_sum.npz', 'homere_io_16_step_pwm_40_sum.npz'])
-        if 0:
+        if 1:
             make_many_test(plant_ann, '/home/poine/work/homere/homere_control/data/homere/gazebo/',
                            ['homere_io_17_sine_pwm_sum.npz', 'homere_io_17_sine_pwm_15_sum.npz',
                             'homere_io_17_sine_pwm_30_sum.npz', 'homere_io_17_sine_pwm_40_sum.npz'])
     plt.show()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main()

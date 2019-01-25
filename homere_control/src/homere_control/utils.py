@@ -5,6 +5,7 @@ import math, numpy as np
 import matplotlib.pyplot as plt
 import tf.transformations
 
+import julie_misc.plot_utils as jpu
 import pdb
 
 
@@ -58,3 +59,13 @@ if __name__ == '__main__':
     plt.plot(time, sp)
     plt.show()
     #pdb.set_trace()
+
+#
+#
+#
+def plot_training(ann):
+    _h = ann.history.history
+    plt.figure()
+    plt.plot(_h['loss'])
+    plt.plot(_h['val_loss'])
+    jpu.decorate(plt.gca(), 'loss', xlab='epochs', legend=['training', 'validation'])

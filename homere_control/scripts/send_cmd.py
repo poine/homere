@@ -48,7 +48,7 @@ class PwmSine:
     def to_msg(self, t, msg):
         msg.mode = 0
         msg.pwm_l = self.a*np.math.sin(self.om*(t+self.dt0))
-        msg.pwm_r = msg.pwm_l
+        msg.pwm_r = -msg.pwm_l
         
 class PwmStairs:
     def __init__(self, n_stair=10, dt_stair=2., _min=0, _max=20):
