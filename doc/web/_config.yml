@@ -1,0 +1,8 @@
+name: "Homere Control"
+description: "Homere Control"
+
+url: "http://www.recherche.enac.fr/~drouin/homere_control/"
+
+markdown: kramdown
+permalink: pretty
+highlighter: rouge
