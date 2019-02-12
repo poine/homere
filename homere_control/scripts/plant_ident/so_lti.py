@@ -61,7 +61,8 @@ class Plant:
         tmp = np.dot(np.linalg.inv(self.Ac), self.Ad-np.eye(2))
         self.Bd = np.dot(tmp, self.Bc)
         LOG.debug('\nAd\n{}\nBd\n{}'.format(self.Ad, self.Bd))
-
+        self.compute_tf()
+        
     def analyse(self):
         eva, eve = np.linalg.eig(self.Ad)
         #LOG.info('poles {}'.format(eva))
@@ -78,14 +79,14 @@ class Plant:
             self.M = np.linalg.inv(self.invM)
             np.allclose(Ad_cc, np.dot(self.invM, np.dot(self.Ad, self.M)))
             np.allclose(Bd_cc, np.dot(self.invM, self.Bd))
-        
-        ss_disc = control.ss(self.Ad, self.Bd, [[1,0]], [[0]], self.dt)
-        tf_disc = control.tf(ss_disc)
-        #print(tf_disc)
-        self.a1, self.a0 = tf_disc.num[0][0]
-        self.b2, self.b1, self.b0 = tf_disc.den[0][0]
-        #pdb.set_trace()
-        
+
+    def compute_tf(self):
+        self.ss_disc = control.ss(self.Ad, self.Bd, [[1,0]], [[0]], self.dt)
+        self.tf_disc = control.tf(self.ss_disc)
+        self.a1, self.a0 = self.tf_disc.num[0][0]
+        self.b2, self.b1, self.b0 = self.tf_disc.den[0][0]
+
+    def get_tf(self): return self.tf_disc
         
     def cont_dyn(self, X, t, U):
         Xd = np.dot(self.Ac, X) + np.dot(self.Bc, U)
@@ -126,19 +127,19 @@ class CCPlant(Plant):
 class IoPlantModel(CCPlant):
     def __init__(self, omega=3., xi=1.):
         CCPlant.__init__(self, omega, xi)
-        self.analyse()
+        #self.analyse()
 
     def io_dyn(self, y_k, y_km1, u_k, u_km1):
         return -self.b1*y_k-self.b0*y_km1+self.a1*u_k+self.a0*u_km1
 
-    def sim_io(self, time, y0, ctl):
+    def sim_io(self, time, y0, u0, ctl):
         y, u = np.zeros(len(time)),  np.zeros(len(time))
-        y[:2] = y0
+        y[:2] = y0; u[0] = u0 
         for k in range(1, len(time)-1):
             u[k] = ctl.get(k, y[k], y[k-1], u[k-1])
             y[k+1] = self.io_dyn(y[k], y[k-1], u[k], u[k-1])
+        u[len(time)-1] = ctl.get(len(time)-1, y[len(time)-1], y[len(time)-2], u[len(time)-2])
         return y, u
-
 
     
 class IoCtlCst:

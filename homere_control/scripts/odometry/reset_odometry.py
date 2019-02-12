@@ -14,9 +14,11 @@ class Node:
         self.tf_msg.header.frame_id = rospy.get_param('~ref_frame', "world")
         self.tf_msg.child_frame_id = "odom"
         self.robot_truth_topic = rospy.get_param('~robot_truth_topic', "/homere/base_link_truth")
-
+        duration = rospy.get_param('~duration', 60)
+        print('robot_truth_topic: {}'.format(self.robot_truth_topic))
+        
     def fetch_thruth(self):
-        #print('fetching base_link to _world truth')
+        #print('fetching base_link_to_world truth {}'.format(self.robot_truth_topic))
         _msg = rospy.wait_for_message(self.robot_truth_topic, nav_msgs.msg.Odometry)
         #print('got {}'.format(_msg))
         T_bl2w = hru.T_of_nav_odom(_msg)
@@ -67,7 +69,7 @@ class Node:
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.broadcast_w2o(T_o2w)
-            self.compute_drift(T_o2w)
+            #self.compute_drift(T_o2w)
             rate.sleep()
     
 

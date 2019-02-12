@@ -103,8 +103,8 @@ if __name__ == '__main__':
 
     #ds = hio.DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_2.npz', _type='homere')
     #ds = hio.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
-    #filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
-    filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
+    filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
+    #filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
     ds = hio.DataSet(filename, _type)
     reg = fod.Regression(ds)
     reg.fit_wheel_radius()
@@ -112,14 +112,14 @@ if __name__ == '__main__':
 
     #wheel_sep, wheel_radius = 0.11039085, 0.03078012
     wheel_sep, wheel_radius = reg.wheel_sep, reg.wheel_radius
-    if True:
+    if True: # python implementation
         odom, label = Odometer(wheel_sep, wheel_radius, wheel_radius), 'pyodom'
         _start_idx, _run_len = 0, None
         odom_pos, odom_yaw = run_on_ds(odom, ds, label, _start_idx, _run_len)
         plot2d(odom, odom_pos, odom_yaw, ds, label)
         plot_err(odom_pos, odom_yaw, ds, label, _start_idx, _run_len, filename)
         #pdb.set_trace()
-    if False:
+    if False: # C++ implementation
         odom2, label = cpp_homere_control.Odometry(), 'cppodom'
         odom2.init(wheel_sep, wheel_radius, wheel_radius)
         odom_pos2, odom_yaw2 = run_on_ds(odom2, ds, label)

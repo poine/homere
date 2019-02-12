@@ -51,7 +51,8 @@ class Node:
 
     def __init__(self):
         rospy.init_node('homere_controller_input_sender', anonymous=True)
-
+        cmd_topic = rospy.get_param('~cmd_topic', '/homere/homere_controller/cmd_vel')
+ 
         self.debug_pub = Publisher()
         
         goalx = rospy.get_param('~goalx', 0.)
@@ -67,7 +68,7 @@ class Node:
         self.imu_sub = rospy.Subscriber('/homere/imu', sensor_msgs.msg.Imu, self.imu_cbk, queue_size=1)
         
         self.ctl_in_msg = geometry_msgs.msg.Twist()
-        self.ctl_input_pub = rospy.Publisher('/homere/homere_controller/cmd_vel', geometry_msgs.msg.Twist, queue_size=1)
+        self.ctl_input_pub = rospy.Publisher(cmd_topic, geometry_msgs.msg.Twist, queue_size=1)
         self.ctl_debug_msg = homere_control.msg.debug_move_controller()
         self.ctl_debug_pub = rospy.Publisher('/homere/move_controller/debug', homere_control.msg.debug_move_controller, queue_size=1)
 
@@ -131,7 +132,7 @@ class Node:
         self.sum_err_psi += err_psi
         Ki, Kp, Kd = 0.01, 3., 3.
         self.rvel_sp = -(Ki*self.sum_err_psi + Kp*err_psi + Kd*self.psid)
-        self.lvel_sp = 0.5 if not self.end_reached else 0.
+        self.lvel_sp = 0.2 if not self.end_reached else 0.
         
         #pdb.set_trace()
         #T_bl2g = np.dot(self.T_o2g, T_bl2o)

@@ -25,10 +25,11 @@ layout: default
 	./record_debug_io.py /home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_2.npz
 	
 	
-	
-	rosrun homere_control reset_odometry.py
-	/home/poine/work/oscar.git/oscar/oscar_control/scripts/pp_guidance_node.py _twist_cmd_topic:=/homere/homere_controller/cmd_vel  _path_filename:=/home/poine/work/julie/julie/julie_worlds/paths/test/oval_2.npz
-	rviz -d /home/poine/work/homere/homere_description/rviz/view_pp_guidance.rviz
+## RosMip/Gazebo
+
+	roslaunch rosmip_gazebo rosmip_world.launch gui:=false
+	rosrun homere_control send_cmd_vel.py _signal_type:=random_2 cmd_topic:=/rosmip_balance_controller/cmd_vel
+	rosrun rosmip_control record_debug_io.py ~/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_03.npz
 
 # Summary
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
-import numpy as np
+import sys, numpy as np
 import matplotlib.pyplot as plt
 import tf.transformations
 
@@ -9,6 +9,46 @@ import julie_misc.plot_utils as jpu
 import homere_control.utils as hcu
 import pdb
 
+def weighted_sample(weights, sample_size):
+    """
+    Returns a weighted sample without replacement. Note: weights.dtype should be float for speed, see: http://sociograph.blogspot.nl/2011/12/gotcha-with-numpys-searchsorted.html
+    """
+    totals = np.cumsum(weights)
+    sample = []
+    for i in xrange(sample_size):
+        rnd = random.random() * totals[-1]
+        idx = np.searchsorted(totals,rnd,'right')
+        sample.append(idx)
+        totals[idx:] -= weights[idx]
+    return sample
+
+
+class RandomDataset():
+    '''
+    A dataset with uniform random wheel rotational velocities.
+    '''
+    def __init__(self, _nb_points, dt=0.01, enc_mu=0., enc_std=0.1):
+        self.w_r, self.w_s = 0.2, 0.5
+        if 0:
+            self.enc_vel_lw, self.enc_vel_rw = [np.random.uniform(low=-1., high=1., size=_nb_points) for i in range(2)]
+        else:
+            length, angle = np.sqrt(np.random.uniform(0, 1, size=_nb_points)), np.pi * np.random.uniform(0, 2, size=_nb_points)
+            self.enc_vel_lw, self.enc_vel_rw = length * np.cos(angle), length * np.sin(angle)
+        self.enc_vel_stamp = np.arange(0, 0+_nb_points*dt, dt)
+        err_lw, err_rw = [np.random.normal(loc=enc_mu, scale=enc_std, size=_nb_points) for i in range(2)]
+        foo = np.array([hcu.kin_vel_of_wheel_vel(lrv, rrv, self.w_r, self.w_s) for lrv, rrv in zip(self.enc_vel_lw+err_lw, self.enc_vel_rw+err_rw)])
+        self.truth_lvel, self.truth_lvel_body, self.truth_rvel = [np.zeros((_nb_points, 3)) for i in range(3)]
+        self.truth_lvel[:,0] = self.truth_lvel_body[:,0] = foo[:,0]
+        self.truth_rvel[:,2] = foo[:,1]
+        self.truth_vel_stamp = self.enc_vel_stamp
+        
+        
+    def uniformize(self):
+        # https://stackoverflow.com/questions/14791918/sampling-histograms-such-that-the-sum-over-the-sample-is-uniform
+        pass
+
+
+        
 class DataSet:
 
     def __init__(self, filename, _type='oscar'):
@@ -17,6 +57,9 @@ class DataSet:
         self.enc_lw, self.enc_rw = self.data['encoders_lw'], self.data['encoders_rw']
         try:
             self.lw_pwm, self.rw_pwm = self.data['pwm_lw'], self.data['pwm_rw']
+        except KeyError: pass
+        try:
+            self.pitch, self.pitch_dot = self.data['imu_pitch'], self.data['imu_pitch_dot']
         except KeyError: pass
         self.enc_stamp = self.data['encoders_stamp']
 
@@ -29,9 +72,10 @@ class DataSet:
             self.truth_stamp = self.data['truth_stamp']
             self.truth_lvel, self.truth_rvel = self.data['truth_lvel'], self.data['truth_rvel']
             self.truth_vel_stamp = self.truth_stamp
+
         print('##  found {} debug_io and {} truth'.format(len(self.enc_stamp), len(self.truth_stamp)))
         print('##  spaning {:.1f} s'.format(self.enc_stamp[-1]-self.enc_stamp[0]))
-        self.compute_enc_vel()
+        self.differentiate_enc_for_vel()
         self.compute_truth_lvel()
 
     def differentiate_truth_for_vel(self):
@@ -46,7 +90,7 @@ class DataSet:
         self.truth_rvel[:,2] /= self.truth_dt
 
         
-    def compute_enc_vel(self):
+    def differentiate_enc_for_vel(self):
         # encoders
         self.enc_vel_lw = self.enc_lw[1:] - self.enc_lw[:-1]
         self.enc_vel_rw = self.enc_rw[1:] - self.enc_rw[:-1]
@@ -104,6 +148,44 @@ def plot_encoders(_ds, filename=None):
     jpu. decorate(ax, title='Encoders velocity dif', xlab='time in s', ylab='rad/s', legend=None, xlim=None, ylim=None)
     jpu.savefig(filename)
 
+    
+def plot_encoders_stats(_ds, filename=None, title=''):
+    ''' plot encoders histograms '''
+    fig = jpu.prepare_fig(window_title='Encoders Stats ({})'.format(title))
+    ax = plt.subplot(2,2,1)
+    plt.hist(_ds.enc_vel_lw)
+    jpu. decorate(ax, title='Left Wheel', xlab='rvel in rad/s', ylab='samples')
+    ax = plt.subplot(2,2,2)
+    plt.hist(_ds.enc_vel_lw)
+    jpu. decorate(ax, title='Right Wheel', xlab='rvel in rad/s', ylab='samples')
+    ax = plt.subplot(2,2,3)
+    plt.hist(_ds.truth_lvel_body[:,0])
+    jpu. decorate(ax, title='Linear Velocity', xlab='m/s', ylab='samples')
+    ax = plt.subplot(2,2,4)
+    plt.hist(_ds.truth_rvel[:,2])
+    jpu. decorate(ax, title='Angular Velocity', xlab='rad/s', ylab='samples')
+    jpu.savefig(filename)
+
+
+def plot_encoders_3D(_ds, filename=None, title=''):
+    fig = jpu.prepare_fig(window_title='Encoders 3D ({})'.format(title))
+    ax = fig.add_subplot(121, projection='3d')
+    truth_lvel_body_1 = interpolate(_ds.truth_lvel_body, _ds.truth_vel_stamp, _ds.enc_vel_stamp)
+    ax.scatter(_ds.enc_vel_lw, _ds.enc_vel_rw, truth_lvel_body_1[:,0], s=0.1)
+    ax.set_xlabel('$\omega_l (rad/s)$');ax.set_ylabel('$\omega_r (rad/s)$')
+    ax.set_zlabel('$V (m/s)$')
+    jpu. decorate(ax, title='Linear Velocity vs/enc vels')
+    ax = fig.add_subplot(122, projection='3d')
+    truth_rvel_1 = interpolate(_ds.truth_rvel, _ds.truth_vel_stamp, _ds.enc_vel_stamp)
+    ax.scatter(_ds.enc_vel_lw, _ds.enc_vel_rw, truth_rvel_1[:,2], s=0.1)#, c=c, marker=m)
+    ax.set_xlabel('$\omega_l (rad/s)$');ax.set_ylabel('$\omega_r (rad/s)$')
+    ax.set_zlabel('$\Omega (rad/s)$')
+    jpu. decorate(ax, title='Angular Velocity vs/enc vels')
+    jpu.savefig(filename)
+    return fig
+    
+    
+    
 def plot_pwm(_ds, filename=None):
     figsize=(20.48, 2.56)
     fig = jpu.prepare_fig(window_title='PWM', figsize=figsize)
@@ -111,6 +193,16 @@ def plot_pwm(_ds, filename=None):
     plt.plot(_ds.enc_stamp, _ds.lw_pwm, '.', label="lw")
     plt.plot(_ds.enc_stamp, _ds.rw_pwm, '.', label="rw")
     jpu. decorate(ax, title='PWM', xlab='time in s', ylab='', legend=True)
+
+def plot_imu(_ds, filename=None):
+    figsize=(20.48, 5.12)
+    fig = jpu.prepare_fig(window_title='IMU', figsize=figsize)
+    ax = plt.subplot(2,1,1)
+    plt.plot(_ds.enc_stamp, np.rad2deg(_ds.pitch), '.', label="pitch")
+    jpu. decorate(ax, title='imu pitch', xlab='time in s', ylab='deg', legend=True)
+    ax = plt.subplot(2,1,2)
+    plt.plot(_ds.enc_stamp, np.rad2deg(_ds.pitch_dot), '.', label="pitch_dot")
+    jpu. decorate(ax, title='imu pitch dot', xlab='time in s', ylab='deg/s', legend=True)
     
     
 def plot_truth_vel(_ds, filename=None):
@@ -139,16 +231,22 @@ def plot2d(_ds, filename=None):
 
 def plot_all(ds):
     plot_encoders(ds)
+    plot_encoders_stats(ds)
     plot_pwm(ds)
     plot2d(ds)
     plot_truth_vel(ds)
+    plot_encoders_3D(ds)
+    plot_imu(ds)
         
 if __name__ == '__main__':
     #_ds = DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_2.npz', _type='homere')
     #_ds = DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
     #_ds = DataSet('/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', _type='homere')
     #filename, _type = '/home/poine/work/homere/homere_control/data/odometry/julie/gazebo_5.npz', 'homere'
-    filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_10.npz', 'homere'
+    #filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_10.npz', 'homere'
+    filename, _type = '/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_04_sine_2.npz', 'rosmip'
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
     _ds = DataSet(filename, _type)
     #plot_encoders(_ds)
     #plot2d(_ds)

@@ -17,7 +17,7 @@ namespace homere_controller {
   {}
     
   void OdomPublisher::init(ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh) {
-// Get and check params for covariances
+    // Get and check params for covariances
     XmlRpc::XmlRpcValue pose_cov_list;
     controller_nh.getParam("pose_covariance_diagonal", pose_cov_list);
     ROS_ASSERT(pose_cov_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
@@ -162,7 +162,7 @@ namespace homere_controller {
     
   }
 
-    //********************************
+  //********************************
   //  
   //********************************
   DebugIOPublisher::DebugIOPublisher() {}

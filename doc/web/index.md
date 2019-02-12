@@ -2,12 +2,16 @@
 title: Homere Control
 layout: default
 ---
-# Homere Control
+# Homere
 
-  * [Examples](examples)
-  * [Regression 1](regression1)
-  * [so_lti_io](so_lti_io)
-  
+  * [Description](description)
+  * [Dataset](examples)
+  * Odometry:
+    * [Regression 1](regression1)
+  * Control:
+    * [Identification](identification)
+    * [so_lti_io](so_lti_io)
+    * [so_lti_last_input](so_lti_last_input)
   
 <!--
 <figure>

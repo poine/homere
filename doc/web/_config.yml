@@ -1,7 +1,7 @@
 name: "Homere Control"
 description: "Homere Control"
 
-url: "http://www.recherche.enac.fr/~drouin/homere_control/"
+url: "http://www.recherche.enac.fr/~drouin/homere"
 
 markdown: kramdown
 permalink: pretty

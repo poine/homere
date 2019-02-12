@@ -17,7 +17,12 @@ class Regression:
         # interpolate truth at same timestamps as encoders
         self.truth_lvel_body_1 = hio.interpolate(ds.truth_lvel_body, ds.truth_vel_stamp, ds.enc_vel_stamp)
         self.truth_rvel_1 = hio.interpolate(ds.truth_rvel, ds.truth_vel_stamp, ds.enc_vel_stamp)
-        self.report_fmt = '  * simple: {:.4f} m std {:.2e} mu {:.2e}\n  * ransac: {:.4f} m std {:.2e} mu {:.2e}'
+        self.report_fmt = '''
+|         | est      | res std (m)  | res mu (m)| 
+|:--------|:--------:|:------------:|:---------:|
+| simple: | {:.4f}   | {:.2e}       | {:.2e}    |
+| ransac: | {:.4f}   | {:.2e}       | {:.2e}    |
+'''
         
     def fit_wheel_radius(self):
         # fit wheel radius using encoder avg rvel and truth vel
@@ -162,7 +167,8 @@ if __name__ == '__main__':
     #_ds = hio.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
     #filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
     #filename, _type = '/home/poine/work/homere/homere_control/data/odometry/julie/gazebo_2.npz', 'homere'
-    filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
+    #filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
+    filename, _type = '/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_02.npz', 'rosmip'
     _ds = hio.DataSet(filename, type)
     reg = Regression(_ds)
     #hio.plot_interp(_ds.truth_lvel_body, _ds.truth_stamp, reg.truth_lvel_body_1, _ds.enc_vel_stamp)
