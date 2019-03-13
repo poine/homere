@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import numpy as np, matplotlib.pyplot as plt
+import sys, numpy as np, matplotlib.pyplot as plt
 import sklearn.linear_model
 # see https://scikit-learn.org/stable/auto_examples/linear_model/plot_ransac.html
 import pdb
@@ -165,10 +165,13 @@ class Regression:
 if __name__ == '__main__':
     #_ds = hio.DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_1.npz', _type='homere')
     #_ds = hio.DataSet('/home/poine/work/oscar.git/oscar/oscar_control/scripts/odometry/odom_data_4.npz', _type='oscar')
-    #filename, _type = '/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
+    filename, _type = '/mnt/mint18/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', 'homere'
     #filename, _type = '/home/poine/work/homere/homere_control/data/odometry/julie/gazebo_2.npz', 'homere'
     #filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_3.npz', 'homere'
-    filename, _type = '/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_02.npz', 'rosmip'
+    #filename, _type = '/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_02.npz', 'rosmip'
+    #filename, _type = '/mnt/mint18/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_2_io_09_sine_2.npz', 'rosmip'
+    type = 'oscar'
+    filename = '/mnt/mint18/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz' if len(sys.argv) < 2 else sys.argv[1]
     _ds = hio.DataSet(filename, type)
     reg = Regression(_ds)
     #hio.plot_interp(_ds.truth_lvel_body, _ds.truth_stamp, reg.truth_lvel_body_1, _ds.enc_vel_stamp)

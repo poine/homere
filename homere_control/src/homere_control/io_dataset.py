@@ -64,9 +64,13 @@ class DataSet:
         self.enc_stamp = self.data['encoders_stamp']
 
         if _type == 'oscar':
-            self.truth_pos, self.truth_ori = self.data['mocap_pos'], self.data['mocap_ori']
-            self.truth_stamp = np.array([st.to_sec() for st in self.data['mocap_stamp']])
-            self.differentiate_truth_for_vel()
+            try:
+                self.truth_pos, self.truth_ori = self.data['mocap_pos'], self.data['mocap_ori']
+                self.truth_stamp = np.array([st.to_sec() for st in self.data['mocap_stamp']])
+                self.differentiate_truth_for_vel()
+            except KeyError:
+                self.truth_pos, self.truth_ori, self.truth_stamp = [], [], []
+                self.truth_lvel, self.truth_vel_stamp = [], []
         else:
             self.truth_pos, self.truth_ori = self.data['truth_pos'], self.data['truth_ori']
             self.truth_stamp = self.data['truth_stamp']
@@ -232,11 +236,11 @@ def plot2d(_ds, filename=None):
 def plot_all(ds):
     plot_encoders(ds)
     plot_encoders_stats(ds)
-    plot_pwm(ds)
+    #plot_pwm(ds)
     plot2d(ds)
     plot_truth_vel(ds)
     plot_encoders_3D(ds)
-    plot_imu(ds)
+    #plot_imu(ds)
         
 if __name__ == '__main__':
     #_ds = DataSet('/home/poine/work/homere/homere_control/data/odom_gazebo_2.npz', _type='homere')
@@ -244,7 +248,7 @@ if __name__ == '__main__':
     #_ds = DataSet('/home/poine/work/julie/julie/julie_control/scripts/julie_odom_data_1.npz', _type='homere')
     #filename, _type = '/home/poine/work/homere/homere_control/data/odometry/julie/gazebo_5.npz', 'homere'
     #filename, _type = '/home/poine/work/homere/homere_control/data/homere/gazebo/homere_io_10.npz', 'homere'
-    filename, _type = '/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_04_sine_2.npz', 'rosmip'
+    filename, _type = '/home/poine/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_04_sine_2.npz', 'oscar'
     if len(sys.argv) > 1:
         filename = sys.argv[1]
     _ds = DataSet(filename, _type)

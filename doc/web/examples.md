@@ -31,6 +31,12 @@ layout: default
 	rosrun homere_control send_cmd_vel.py _signal_type:=random_2 cmd_topic:=/rosmip_balance_controller/cmd_vel
 	rosrun rosmip_control record_debug_io.py ~/work/homere/homere_control/data/rosmip/gazebo/rosmip_io_03.npz
 
+## Nono/Gazebo
+
+	roslaunch nono_simulator empty_world.launch
+	
+
+
 # Summary
 
 {% include odometry_examples.html %}

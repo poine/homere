@@ -55,11 +55,14 @@ namespace homere_simulator {
   
   void HomereHardwareInterface::readSim(ros::Time time, ros::Duration period) {
     for (int i=0; i<NB_JOINTS; i++) {
-      joint_position_[i] = gz_joints_[i]->GetAngle(0).Radian();
+      //joint_position_[i] = gz_joints_[i]->GetAngle(0).Radian();
+      joint_position_[i] = gz_joints_[i]->Position(0);
       joint_velocity_[i] = gz_joints_[i]->GetVelocity(0);
     }
-    gz_pose_ =  link_->GetWorldPose();
-    tf::Quaternion q_world_to_base = tf::Quaternion(gz_pose_.rot.x, gz_pose_.rot.y, gz_pose_.rot.z, gz_pose_.rot.w); // x, y, z, w
+    //gz_pose_ =  link_->GetWorldPose();
+    gz_pose_ =  link_->WorldPose();
+    //tf::Quaternion q_world_to_base = tf::Quaternion(gz_pose_.rot.x, gz_pose_.rot.y, gz_pose_.rot.z, gz_pose_.rot.w); // x, y, z, w
+    tf::Quaternion q_world_to_base = tf::Quaternion(gz_pose_.Rot().X(), gz_pose_.Rot().Y(), gz_pose_.Rot().Z(), gz_pose_.Rot().W()); // x, y, z, w
     tf::Quaternion q_world_to_imu = q_world_to_base * q_base_to_imu_;
     imu_orientation_[0] = q_world_to_imu.x();
     imu_orientation_[1] = q_world_to_imu.y();
