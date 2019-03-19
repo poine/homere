@@ -6,9 +6,7 @@ import sklearn.linear_model
 import pdb
 
 import julie_misc.plot_utils as jpu
-#import odom_dataset as ods
 import homere_control.io_dataset as hio
-#odom_dataset as ods
 
 class Regression:
 

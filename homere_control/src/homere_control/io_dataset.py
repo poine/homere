@@ -56,6 +56,10 @@ class DataSet:
         self.data =  np.load(filename)
         self.enc_lw, self.enc_rw = self.data['encoders_lw'], self.data['encoders_rw']
         try:
+            self.enc_vel_lw1, self.enc_vel_rw1 = self.data['encoders_lw_rvel'], self.data['encoders_rw_rvel']
+        except KeyError:
+            print('# no enc_vel')
+        try:
             self.lw_pwm, self.rw_pwm = self.data['pwm_lw'], self.data['pwm_rw']
         except KeyError: pass
         try:
