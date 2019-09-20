@@ -165,6 +165,8 @@ add_library(homere_controller
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+add_dependencies(homere_controller ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(homere_controller
   ${catkin_LIBRARIES} roboticscape
 )
